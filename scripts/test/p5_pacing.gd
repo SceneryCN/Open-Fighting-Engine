@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: MPL-2.0
+extends SceneTree
+
+# Measure draws and main-thread simulation of the shipped four-fighter scene.
+const WARMUP := 120
+const SAMPLES := 600
+var arena
+var physics_ticks := 0
+var frames := 0
+var last_draw := 0
+var tick_started := 0
+var draw_us := PackedInt64Array()
+var cpu_us := PackedInt64Array()
+var attacks := 0
+
+class TickProbe extends Node:
+	var ended: Callable
+	func _physics_process(_delta: float) -> void:
+		ended.call()
+
+func _initialize() -> void:
+	call_deferred("_start")
+
+func _start() -> void:
+	if DisplayServer.get_name() == "headless":
+		printerr("Graphical display required")
+		quit(1)
+		return
+	arena = load("res://demo/arena.tscn").instantiate()
+	arena.mode = "ffa"
+	arena.roster = PackedStringArray(["amber", "indigo", "amber", "indigo"])
+	root.add_child(arena)
+	if arena.current.get("status", -1) != 0:
+		quit(1)
+		return
+	var probe := TickProbe.new()
+	probe.ended = _after
+	probe.process_physics_priority = 100
+	root.add_child(probe)
+	physics_frame.connect(_before)
+	RenderingServer.frame_post_draw.connect(_drawn)
+
+func _before() -> void:
+	tick_started = Time.get_ticks_usec()
+	physics_ticks += 1
+	for event in arena.current.events:
+		if event.kind == "Started":
+			attacks += 1
+	for slot in range(1, 5):
+		var phase := (physics_ticks + slot * 9) % 48
+		for binding in [["attack", phase == 8], ["guard", phase < 7 or (phase >= 12 and phase < 37)], ["lane", phase == 40]]:
+			var action := StringName("p%d_%s" % [slot, binding[0]])
+			if binding[1]:
+				Input.action_press(action)
+			else:
+				Input.action_release(action)
+
+func _after() -> void:
+	if tick_started and frames >= WARMUP:
+		cpu_us.append(Time.get_ticks_usec() - tick_started)
+
+func _drawn() -> void:
+	var now := Time.get_ticks_usec()
+	frames += 1
+	if frames == WARMUP / 2:
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--capture="):
+				var path := arg.trim_prefix("--capture=")
+				if root.get_texture().get_image().save_png(path) != OK:
+					quit(1)
+					return
+	if frames > WARMUP:
+		draw_us.append(now - last_draw)
+	last_draw = now
+	if draw_us.size() != SAMPLES:
+		return
+	var total := 0
+	var late := 0
+	for duration in draw_us:
+		total += duration
+		if duration > 25000:
+			late += 1
+	draw_us.sort()
+	cpu_us.sort()
+	print(JSON.stringify({"display":DisplayServer.get_name(), "renderer":RenderingServer.get_current_rendering_method(),
+		"samples":SAMPLES, "physics_samples":cpu_us.size(), "frame":arena.current.frame,
+		"fps":1000000.0*SAMPLES/total, "draw_p95_us":draw_us[569], "draw_p99_us":draw_us[593],
+		"draw_max_us":draw_us[-1], "over_25ms":late, "physics_p99_us":cpu_us[ceili(cpu_us.size()*0.99)-1],
+		"physics_max_us":cpu_us[-1], "actions_started":attacks}))
+	quit(0 if attacks > 0 and arena.current.frame >= SAMPLES else 1)

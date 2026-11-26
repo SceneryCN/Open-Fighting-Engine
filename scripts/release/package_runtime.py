@@ -21,8 +21,8 @@ def package(folder, output):
         readme = (f"Open Fighting Engine - Godot runtime\n"
                   f"Matching source: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
                   "Rust standard library notices: https://doc.rust-lang.org/1.100.0/copyright.html\n"
-                  "Run the included executable to play. R restarts the match. Controls appear on screen.\n"
-                  "Built-in example character data and sprites: CC0-1.0.\n").encode()
+                  "Run the included executable to play. Choose a mode from the menu. Esc pauses. See Controls for all seats.\n"
+                  "Built-in example character data, sprites and stage theme music: CC0-1.0.\n").encode()
         header = tarfile.TarInfo("README.txt")
         header.size = len(readme)
         archive.addfile(header, BytesIO(readme))

@@ -53,6 +53,7 @@ func _setup_arena() -> void:
 			_actions[i].append(action)
 		_add_fighter_nodes()
 	audio = $Audio
+	audio.bus = &"SFX"
 	_sounds["Hit"] = _tone(180, 47, 0.115)
 	_sounds["Blocked"] = _tone(470, 140, 0.085)
 	$HUD.configure(mode, roster.size())

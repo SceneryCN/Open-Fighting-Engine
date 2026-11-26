@@ -1,4 +1,4 @@
-"""Import and run the P0 and P4 scenes (or test its exported executable) with a timeout."""
+"""Import and run the P0, P4 and P5 scenes (or test its exported executable) with a timeout."""
 import argparse
 from pathlib import Path
 import plistlib
@@ -42,3 +42,4 @@ if __name__ == "__main__":
              str(Path(shutil.which(args.godot) or args.godot).resolve())], marker="OFE_P4_EXTERNAL_PASS")
     run(base + ["--", "--p0-test"], marker="OFE_P0_PASS")
     run(base + ["--", "--p4-test"], marker="OFE_P4_PASS")
+    run(base + ["--", "--p5-test"], marker="OFE_P5_PASS")

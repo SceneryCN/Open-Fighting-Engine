@@ -2,7 +2,8 @@ Open Fighting Engine licensing notice
 
 Original engine, tools, integration, build scripts and accompanying technical
 documentation: Mozilla Public License 2.0 (LICENSES/MPL-2.0.txt).
-Native data format specifications, schemas and original synthetic data fixtures:
+Native data format specifications, schemas, original synthetic data fixtures, bundled
+example fighter assets and demo/viaduct.wav music:
 CC0 1.0 Universal (LICENSES/CC0-1.0.txt).
 Original SDK and example character code, if introduced under the charter:
 MIT (LICENSES/MIT.txt).

@@ -1,5 +1,5 @@
-# OFE 项目状态 · 2026-11-26
+# OFE 项目状态 · P5
 
-负责人授权继续 P4。P4 Godot Runtime 已实现，状态 TESTING，最终签收由负责人决定。默认 Godot 主场景支持双人键盘对战、独立外部角色、OFA 帧显示、HUD、命中与格挡音效和重开。P5 Demo Game 尚未启动。
+P5 Sunset Viaduct 已实现，处于 TESTING，最终签收由项目负责人决定。默认 Godot 场景进入示范游戏。P6 尚未启动。
 
-[运行方法](docs/p4/RUNTIME.md) · [P4 交付](DELIVERY_REPORT.md) · [P3 交付归档](docs/p3/DELIVERY_REPORT.md) · [P0 至 P2 复核](docs/testing/P0_P2_REVIEW.md)
+[操作与训练指南](docs/p5/PLAY.md) · [P5 任务书](docs/p5/TASK_V1.md) · [P5 交付](DELIVERY_REPORT.md) · [P4 交付归档](docs/p4/DELIVERY_REPORT.md)
