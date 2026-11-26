@@ -11,7 +11,7 @@ from pathlib import Path, PureWindowsPath
 from jsonschema import Draft202012Validator
 
 FORMATS = Path(__file__).resolve().parents[2] / "formats"
-KINDS = ("OFC", "OFA", "OGP", "OFL")
+KINDS = ("OFC", "OFA", "OGP", "OFL", "OFE_MOVE_PROFILE")
 CHARACTER_PARTS = ("character", "attributes", "move", "boxes")
 
 
@@ -91,6 +91,22 @@ def resource_path(base, ref):
 
 
 def relations(kind, data):
+    if kind == "OFE_MOVE_PROFILE":
+        moves = data["moves"]
+        ids = {move["id"] for move in moves}
+        seen = set()
+        for i, move in enumerate(moves):
+            if move["id"] in seen:
+                yield ("moves", i, "id"), "duplicate move id"
+            seen.add(move["id"])
+            for j, target in enumerate(move["cancel_into"]):
+                if target not in ids or target == move["id"]:
+                    yield ("moves", i, "cancel_into", j), "expected a different move in this profile"
+            last = -1
+            for j, window in enumerate(move["windows"]):
+                if window["start"] <= last or window["end"] < window["start"]:
+                    yield ("moves", i, "windows", j), "expected ordered non-overlapping windows"
+                last = window["end"]
     if kind == "OFA" and data["source"]["kind"] == "sheet":
         cells = data["source"]["columns"] * data["source"]["rows"]
         for i, frame in enumerate(data["frames"]):
@@ -144,7 +160,7 @@ def validate(path, expected=None, checked=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    check = sub.add_parser("validate", help="validate OFC/OFA/OGP/OFL and resource references")
+    check = sub.add_parser("validate", help="validate OFE documents, move profiles and resource references")
     check.add_argument("document", type=Path)
     args = parser.parse_args()
     try:

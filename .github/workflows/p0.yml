@@ -15,6 +15,8 @@ jobs:
           clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c tests/integration/*.cpp
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/formats -v
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/flux/manifest.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/flux/move_profile.json
           python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/amber/manifest.json
           python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/indigo/manifest.json
       - run: |
@@ -41,7 +43,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run P1 duel and package simulator
+      - name: Test duels, teams and free-for-all, then package simulator
         shell: bash
         run: |
           cargo test --locked -p ofe-combat-core -p ofe-sim
@@ -50,6 +52,8 @@ jobs:
           if [[ "$RUNNER_OS" == Windows ]]; then suffix=".exe"; fi
           sim="ofe-sim$suffix"
           "target/release/$sim" --script tools/ofe-sim/fixtures/duel.frames
+          "target/release/$sim" --mode 2v2 --script tools/ofe-sim/fixtures/arena.frames
+          "target/release/$sim" --mode ffa --script tools/ofe-sim/fixtures/arena.frames
           python scripts/release/package_sim.py build/ofe-sim.tar.gz
       - uses: actions/upload-artifact@v4
         with:
