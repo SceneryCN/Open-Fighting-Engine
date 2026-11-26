@@ -11,3 +11,7 @@
 M1 Max 实窗两轮各采 600 帧，平均 59.512 和 59.993 FPS。直接运行导出程序时最长间隔 70.547 ms，原因尚未确定；仓库外解包运行时最长 23.341 ms。其他平台的图形帧率暂无实机测量。[独立 QA 报告](docs/testing/P8_ACCEPTANCE_REPORT.md) · [实测数据](docs/testing/evidence/p8-release.json)
 
 公开标签与正式发行页将在负责人验收并授权后建立。[P7 交付归档](docs/p7/DELIVERY_REPORT.md)
+
+## 四平台候选下载
+
+提交 `bcf86e0` 的质量检查、全部四个原生平台任务及候选汇总任务通过。同一构建提供四个游戏包、四个模拟器包、一个作者包，以及覆盖全部九个归档的 SHA256SUMS。[候选下载和运行记录](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45834811012)
