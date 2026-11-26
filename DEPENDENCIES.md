@@ -1,5 +1,5 @@
-# P0 依赖清单
-Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion 及后续表内第三方 crate 属于测试／基准依赖。所有 Cargo 源包由 Cargo.lock 记录版本及校验和。
+# OFE 依赖清单
+核心与 ABI 仅使用标准库和本仓库代码。P1 模拟器另使用 serde、serde_json 及其依赖解析内置 OFC 样例。可运行 cargo tree -p ofe-sim -e normal 查看实际依赖树。模拟器归档随附这棵依赖树中的上游许可、样例许可与对应源码地址。Criterion 用于测试与基准。所有 Cargo 源包由 Cargo.lock 记录版本及校验和。
 
 |组件|版本 / 来源|用途|许可与再分发条件|
 |---|---|---|---|
@@ -11,7 +11,7 @@ Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion �
 |cargo-nextest|[0.9.152](https://github.com/nextest-rs/nextest)|独立 Rust 测试运行器|MIT / Apache-2.0；工具本身不随 PoC 发行|
 |clang-format|[LLVM](https://llvm.org/)|C++ 格式检查|Apache-2.0 WITH LLVM-exception；工具本身不随 PoC 发行|
 
-## Cargo 开发依赖（含所有目标）
+## Cargo 依赖（含开发及所有目标）
 下表来自锁定环境的 cargo metadata --locked。各版本页面链接其源代码与许可。所列许可允许在满足各自条件后再分发；常见条件包括保留许可、版权和适用 NOTICE。Unicode 数据另附相应声明。本次不分发这些工具的二进制。
 
 |名称和版本|上游声明的许可|

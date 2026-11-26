@@ -50,8 +50,7 @@ jobs:
           if [[ "$RUNNER_OS" == Windows ]]; then suffix=".exe"; fi
           sim="ofe-sim$suffix"
           "target/release/$sim" --script tools/ofe-sim/fixtures/duel.frames
-          mkdir -p build
-          tar -czf build/ofe-sim.tar.gz -C "$PWD/target/release" "$sim" -C "$PWD/tools/ofe-sim/fixtures" duel.frames
+          python scripts/release/package_sim.py build/ofe-sim.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: ofe-sim-${{ matrix.id }}
