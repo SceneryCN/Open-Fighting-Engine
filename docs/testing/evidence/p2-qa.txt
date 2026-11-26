@@ -71,3 +71,18 @@ frame=22
   p2 team=2 hp=118 energy=40 state=Attack pos=(-2,0,0) facing=1 move=Some(6) combo=1 hitstop=0 dash=false
   p3 team=3 hp=102 energy=40 state=Hitstun pos=(0,0,0) facing=1 move=None combo=0 hitstop=0 dash=false
   p4 team=4 hp=143 energy=40 state=Hitstun pos=(2,0,0) facing=-1 move=None combo=1 hitstop=0 dash=false
+
+# Public GitHub run 45788696712 Success b3f46f188174c97586a6a0f4b9f18474f40438a8 push
+139801939612 quality True
+139801939939 proof (ubuntu-24.04, linux-x64, Linux x64, OFE, OFE) True
+139801939992 proof (windows-2022, windows-x64, Windows x64, OFE.exe, OFE.console.exe) True
+139801940028 proof (macos-15-intel, macos-x64, macOS x64, OFE.app, OFE.app) True
+139801940430 proof (macos-15, macos-arm64, macOS ARM64, OFE.app, OFE.app) True
+ofe-p0-linux-x64 28.1 MB sha256:0617dd689491f3917803ba1054383cfae12aacd789689403dc0626d24bb4c277
+ofe-p0-macos-arm64 27.9 MB sha256:53f2c1c5f6e5426525d3b25e82f0213a17109ad5e5606504ef101561c50a2476
+ofe-p0-macos-x64 30.7 MB sha256:763559df96d3ea10bb1ffcbba2ba5d0805481718e1c73b38d71b2463f0b2cebb
+ofe-p0-windows-x64 36.3 MB sha256:3a8a1ef37348f74827092cada325ba5345bf34600f3c90b6201cd683da3ad8af
+ofe-sim-linux-x64 344 KB sha256:32cf62b35d52e32b21f8161480d1c55ec8337a40907ee35641369b12e40cc54a
+ofe-sim-macos-arm64 316 KB sha256:3439686dcaaa49a2e0ad140bc99088c887499e0a48e65f05979e2b47a3058f80
+ofe-sim-macos-x64 325 KB sha256:1bff15dbb7e72819d2ed366f93f14f29af7c50a29b97b949608c1a7148e9011b
+ofe-sim-windows-x64 218 KB sha256:5840a8aab8d00da9fe0e1bea3f3aeb486781756574adb0f52184ba06a9d31b34

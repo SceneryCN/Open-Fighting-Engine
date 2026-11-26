@@ -65,3 +65,5 @@ python -m unittest discover -s tests/formats -v
 独立重建的 P0 CTest 两项通过，Godot 实际加载扩展并运行成功，14 个 Schema 测试通过，release 包中的两种多人模式执行正常。[原始运行摘录](evidence/p2-qa.txt)
 
 阶段状态 TESTING，待项目负责人决定是否签收。托管 CI 与本机验证分别留证。
+
+**托管 CI 独立复核通过。** b3f46f1 的 push 触发运行 45788696712，总结果 Success。quality 及四个平台任务的步骤均成功。GitHub 产物列表包含四份 ofe-sim 和四份 ofe-p0。本项通过公开运行页面与各 job 明细核对，归档内容的独立执行验证限于上方记录的本机包。[GitHub Actions 运行记录](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45788696712)
