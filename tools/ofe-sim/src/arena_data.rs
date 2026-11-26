@@ -42,7 +42,9 @@ struct ProfileMove {
     kind: String,
     windows: Vec<Bounds>,
     cancel_into: Vec<String>,
+    #[serde(default, deserialize_with = "json_integer::optional")]
     speed: Option<i32>,
+    #[serde(default, deserialize_with = "json_integer::optional")]
     lifetime: Option<u32>,
 }
 
@@ -155,8 +157,11 @@ fn moves(manifest: &Manifest, profile: Profile, hitbox: Rect) -> Result<Vec<Move
 
 #[derive(Deserialize)]
 struct Slot {
+    #[serde(deserialize_with = "json_integer::read")]
     id: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     team: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     ffa_team: u32,
     spawn: Spawn,
 }
@@ -167,11 +172,17 @@ struct ArenaScene {
     profile: String,
     fighters: [Slot; 4],
     lane: Lane,
+    #[serde(deserialize_with = "json_integer::read")]
     initial_energy: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     walk_speed: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     jump_speed: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     gravity: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     dash_speed: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     dash_ticks: u32,
 }
 
