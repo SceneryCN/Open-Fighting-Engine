@@ -54,9 +54,12 @@ cargo run --locked -p ofe-sim -- --mode 2v2 --script tools/ofe-sim/fixtures/aren
 
 例如输入 `1 - - G` 发起多段攻击，P4 保持防御。后续每行继续分别指定四名角色的动作，输入 `4 - - G` 可在首段已命中且取消窗口开放时追击。每个槽位同一帧最多请求一个招式。多个事件在同一个 frame 标题下出现时，由核心统一结算。
 
+脚本第 1 帧，2v2 中 P1 命中 P3，FFA 中 P1 同时命中 P2 与 P3。第 2 帧经过击停，第 3 帧 P1 取消至超必杀，能量从 40 降至 20，连续命中数达到 2。第 9 帧可观察投射物实例。
+
 四个槽位共用原创新建的 OFC 1.0 技术角色 arena_probe。manifest 的 moves 顺序定义数字键索引；OFC 各招式文件提供帧数、伤害、格挡硬直、击停、护甲、无敌、能量消耗及取消窗口。配套 move_profile.json 按 OFC 招式 ID 标注窗口、取消目标、投射物速度和寿命。arena_scene.json 选择本地 manifest 与 profile，并提供队号、出生点、移动参数和初始能量。以相同输入比较两个模式时，双方距离相同，队友保护与最近敌方选择可能改变命中对象。
 
 ```sh
 python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/manifest.json
+python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/move_profile.json
 cargo test --locked -p ofe-sim
 ```

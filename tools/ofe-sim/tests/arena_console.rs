@@ -42,6 +42,14 @@ fn both_modes_run_the_same_script_from_stdin_or_file() {
             "p4 team=4"
         }));
         assert!(text.contains("Cancelled { id: 1, from: 1, into: 4 }"));
+        let opening = text.split("frame=2\n").next().unwrap();
+        assert!(opening.contains("Base(Hit { attacker: 1, target: 3, damage: 7 })"));
+        assert_eq!(
+            opening.contains("Base(Hit { attacker: 1, target: 2, damage: 7 })"),
+            mode == "ffa"
+        );
+        assert!(text.contains("combo=2 hitstop=1"));
+        assert!(text.contains("energy=20 state=Attack"));
         assert!(text.contains("ProjectileSpawned"));
         assert!(text.contains("Dashed"));
     }
