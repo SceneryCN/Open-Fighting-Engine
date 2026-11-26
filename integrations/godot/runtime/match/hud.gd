@@ -53,8 +53,8 @@ func _ready() -> void:
 		energy.append(_label(x, 53, 362, 24, 13, HORIZONTAL_ALIGNMENT_RIGHT if i == 0 else HORIZONTAL_ALIGNMENT_LEFT, paper))
 	_label(402, 8, 156, 24, 13, HORIZONTAL_ALIGNMENT_CENTER, Color("#c8c7ac"), "MATCH TIME")
 	clock_label = _label(402, 28, 156, 41, 30, HORIZONTAL_ALIGNMENT_CENTER, paper)
-	_label(24, 487, 910, 23, 14, HORIZONTAL_ALIGNMENT_LEFT, paper, "P1    A / D  Move     W  Jump     S  Lane     F  Attack     G  Guard     H  Dash")
-	_label(24, 510, 910, 24, 14, HORIZONTAL_ALIGNMENT_LEFT, paper, "P2    ← / →  Move     ↑  Jump     ↓  Lane     J  Attack     K  Guard     L  Dash")
+	_label(24, 487, 910, 23, 14, HORIZONTAL_ALIGNMENT_LEFT, paper, "P1    A / D  Move     W  Jump     S  Lane     J or O  Attack     K  Guard     L  Dash")
+	_label(24, 510, 910, 24, 14, HORIZONTAL_ALIGNMENT_LEFT, paper, "P2    ← / →  Move     ↑  Jump     ↓  Lane     F  Attack     G  Guard     H  Dash")
 	_label(776, 494, 158, 32, 14, HORIZONTAL_ALIGNMENT_RIGHT, Color("#eab77e"), "R   Restart")
 	message = _label(40, 119, 880, 48, 23, HORIZONTAL_ALIGNMENT_CENTER, ink)
 

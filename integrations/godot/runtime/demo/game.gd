@@ -72,6 +72,10 @@ func _ready() -> void:
 		test_driver = load("res://demo/smoke_p7.gd").new()
 		test_driver.run.call_deferred(self)
 
+	elif "--p8-test" in args:
+		test_driver = load("res://demo/smoke_p8.gd").new()
+		test_driver.run.call_deferred(self)
+
 func _load_project(path: String) -> bool:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
@@ -342,9 +346,9 @@ func _controls(in_match: bool) -> void:
 		["Action", "Player 1", "Player 2", "Player 3", "Player 4"],
 		["Move", "A / D", "← / →", "Z / C", "Num 4 / 6"],
 		["Jump / Change lane", "W / S", "↑ / ↓", "X / V", "Num 8 / 2"],
-		["Attack / Guard", "F / G", "J / K", "B / N", "Num 1 / 3"],
-		["Dash", "H", "L", "M", "Num 5"],
-		["Special / Super", "E / Q", "I / U", ", / .", "Num 7 / 9"]
+		["Attack / Guard", "J or O / K", "F / G", "B / N", "Num 1 / 3"],
+		["Dash", "L", "H", "M", "Num 5"],
+		["Special / Super", "U / I", "R / T", ", / .", "Num 7 / 9"]
 	]
 	for r in range(rows.size()):
 		for c in range(columns.size()):

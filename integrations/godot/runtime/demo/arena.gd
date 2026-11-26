@@ -28,13 +28,6 @@ var _loading_file := false
 var _ended := false
 var _pad_ids := PackedInt32Array()
 
-const KEYS := [
-	[KEY_A, KEY_D, KEY_W, KEY_S, KEY_F, KEY_G, KEY_H, KEY_E, KEY_Q],
-	[KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_J, KEY_K, KEY_L, KEY_I, KEY_U],
-	[KEY_Z, KEY_C, KEY_X, KEY_V, KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_PERIOD],
-	[KEY_KP_4, KEY_KP_6, KEY_KP_8, KEY_KP_2, KEY_KP_1, KEY_KP_3, KEY_KP_5, KEY_KP_7, KEY_KP_9]
-]
-const ACTIONS := ["left", "right", "jump", "lane", "attack", "guard", "dash", "special", "super"]
 const PAD := [JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_UP,
 	JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_LEFT_SHOULDER,
 	JOY_BUTTON_X, JOY_BUTTON_Y]
@@ -53,10 +46,7 @@ func _setup_arena() -> void:
 	_actions.clear()
 	for i in range(roster.size()):
 		_actions.append([])
-		for bit in range(ACTIONS.size()):
-			var action := StringName("p%d_%s" % [i + 1, ACTIONS[bit]])
-			_bind(action, KEYS[i][bit])
-			_actions[i].append(action)
+		_bind_fighter(i, ACTIONS.size())
 		_add_fighter_nodes()
 	audio = $Audio
 	audio.bus = &"SFX"

@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: MPL-2.0
 extends Node2D
 
+const KEYS := [
+	[KEY_A, KEY_D, KEY_W, KEY_S, KEY_J, KEY_K, KEY_L, KEY_U, KEY_I],
+	[KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_F, KEY_G, KEY_H, KEY_R, KEY_T],
+	[KEY_Z, KEY_C, KEY_X, KEY_V, KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_PERIOD],
+	[KEY_KP_4, KEY_KP_6, KEY_KP_8, KEY_KP_2, KEY_KP_1, KEY_KP_3, KEY_KP_5, KEY_KP_7, KEY_KP_9]
+]
+const ACTIONS := ["left", "right", "jump", "lane", "attack", "guard", "dash", "special", "super"]
+
 @export var depth_projection := 0.054
 var match_instance: RefCounted
 var current: Dictionary = {}
@@ -33,14 +41,8 @@ func _ready() -> void:
 		_qa.run.call_deferred(self)
 
 func _setup() -> void:
-	var keys := [[KEY_A, KEY_D, KEY_W, KEY_S, KEY_F, KEY_G, KEY_H],
-		[KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_J, KEY_K, KEY_L]]
-	var suffixes := ["left", "right", "jump", "lane", "attack", "guard", "dash"]
 	for i in range(2):
-		for n in range(suffixes.size()):
-			var action := StringName("p%d_%s" % [i + 1, suffixes[n]])
-			_bind(action, keys[i][n])
-			_actions[i].append(action)
+		_bind_fighter(i, 7)
 		_add_fighter_nodes()
 	_bind(&"match_restart", KEY_R)
 	health_bars = $HUD.bars
@@ -65,13 +67,21 @@ func _add_fighter_nodes() -> void:
 	$Actors.add_child(sprite)
 	sprites.append(sprite)
 
-func _bind(action: StringName, code: Key) -> void:
+func _bind_fighter(slot: int, action_count: int) -> void:
+	for bit in range(action_count):
+		var action := StringName("p%d_%s" % [slot + 1, ACTIONS[bit]])
+		_bind(action, KEYS[slot][bit], KEY_O if slot == 0 and ACTIONS[bit] == "attack" else KEY_NONE)
+		_actions[slot].append(action)
+
+func _bind(action: StringName, code: Key, alternate := KEY_NONE) -> void:
 	if InputMap.has_action(action):
 		return
 	InputMap.add_action(action)
-	var event := InputEventKey.new()
-	event.physical_keycode = code
-	InputMap.action_add_event(action, event)
+	for key in [code, alternate]:
+		if key != KEY_NONE:
+			var event := InputEventKey.new()
+			event.physical_keycode = key
+			InputMap.action_add_event(action, event)
 
 func _tone(start: float, finish: float, duration: float) -> AudioStreamWAV:
 	var wav := AudioStreamWAV.new()

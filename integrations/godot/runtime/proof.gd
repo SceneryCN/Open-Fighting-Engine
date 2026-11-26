@@ -32,7 +32,9 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if smoke or battle == null:
 		return
-	var axis := int(Input.is_action_pressed("ui_right")) - int(Input.is_action_pressed("ui_left"))
+	var right := Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")
+	var left := Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")
+	var axis := int(right) - int(left)
 	if battle.submit(current.frame + 1, axis) != 0 or battle.step() != 0:
 		_fail("input or step failed")
 		return
@@ -44,7 +46,7 @@ func _physics_process(_delta: float) -> void:
 
 
 func _present() -> void:
-	$Readout.text = "OFE   /   Bridge proof\nLeft / Right to move\nFrame %d    X %d    Z %d    H %d" % [
+	$Readout.text = "OFE   /   Bridge proof\nA / D or arrow keys to move\nFrame %d    X %d    Z %d    H %d" % [
 		current.frame, current.x, current.z, current.h
 	]
 	queue_redraw()
