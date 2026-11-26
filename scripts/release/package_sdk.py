@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tarfile
 
-ROOT = Path(__file__).resolve().parents[2]
+from release_info import ROOT, add_metadata
 
 
 def package(destination):
@@ -13,6 +13,7 @@ def package(destination):
              "docs/p7/SDK.md", "rust-toolchain.toml", "LICENSE", "LICENSES"]
     files = subprocess.check_output(["git", "ls-files", "-z", "--", *paths], cwd=ROOT)
     with tarfile.open(destination, "w:gz") as archive:
+        add_metadata(archive, "author-kit", "portable")
         for name in files.decode().split("\0"):
             if name:
                 archive.add(ROOT / name, arcname=name)

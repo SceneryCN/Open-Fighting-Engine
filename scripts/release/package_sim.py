@@ -7,7 +7,7 @@ import sys
 import tarfile
 from io import BytesIO
 
-ROOT = Path(__file__).resolve().parents[2]
+from release_info import ROOT, add_metadata, add_stdlib_notice, native_target
 
 
 def cargo_packages(root_package="ofe-sim"):
@@ -42,9 +42,10 @@ def crate_notices(root_package):
 
 def package(output):
     executable = "ofe-sim.exe" if os.name == "nt" else "ofe-sim"
-    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     output.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(output, "w:gz") as archive:
+        release = add_metadata(archive, "sim", native_target())
+        add_stdlib_notice(archive)
         for source, name in [
             (ROOT / "target/release" / executable, executable),
             (ROOT / "tools/ofe-sim/fixtures/duel.frames", "duel.frames"),
@@ -61,7 +62,7 @@ def package(output):
             archive.add(source, arcname=name)
         for notice, name in crate_notices("ofe-sim"):
             archive.add(notice, arcname=name)
-        readme = (f"OFE combat simulator\nSource: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
+        readme = (f"OFE combat simulator {release['version']} / {release['target']}\nSource: {release['source']}\n"
                   f"Run ./{executable} --script duel.frames to replay the example, or ./{executable} for interactive controls.\n"
                   f"Run ./{executable} --mode 2v2 --script arena.frames or use --mode ffa for four independent teams.\n"
                   f"Run ./{executable} --character characters/amber --script duel.frames to use the external character.\n"
@@ -70,7 +71,7 @@ def package(output):
                   "Install the authoring CLI dependencies using Python 3.12: python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt\n"
                   "Build a character: python tools/ofe-validator/ofe.py package characters/amber amber.ofc\n"
                   f"Play the packed character: python tools/ofe-validator/ofe.py run amber.ofc --simulator ./{executable} --script duel.frames\n"
-                  "Built with Rust 1.100.0. Standard library notices: https://doc.rust-lang.org/1.100.0/copyright.html\n").encode()
+                  "Built with Rust 1.100.0. Standard library notices: LICENSES/Rust/COPYRIGHT-library.html\n").encode()
         info = tarfile.TarInfo("README.txt")
         info.size = len(readme)
         archive.addfile(info, BytesIO(readme))
