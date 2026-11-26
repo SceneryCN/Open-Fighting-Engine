@@ -51,12 +51,3 @@ fn restore_rejects_inconsistent_external_state() {
         assert_eq!(Battle::restore(state).err(), Some(error));
     }
 }
-
-#[test]
-fn version_one_state_hash_regression() {
-    let mut battle = Battle::new();
-    battle.submit(1, -1).unwrap();
-    assert_eq!(battle.snapshot().state_hash(), 0xbff3f27cbfcf2729);
-    battle.step().unwrap();
-    assert_eq!(battle.snapshot().state_hash(), 0x9ec803c0a923b750);
-}

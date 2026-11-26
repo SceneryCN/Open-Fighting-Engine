@@ -5,7 +5,7 @@ Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion �
 |---|---|---|---|
 |Rust / Cargo|[1.100.0](https://github.com/rust-lang/rust/tree/1.100.0)|核心、静态库和测试|MIT / Apache-2.0；随标准库再分发保留适用声明，另见工具链各组件通知|
 |Godot|[4.7.2 stable](https://github.com/godotengine/godot/tree/4.7.2-stable)|宿主、验证与导出模板|MIT；保留版权、LICENSE.txt 和各集成组件的 COPYRIGHT.txt|
-|godot-cpp|[godot-4.5-stable，e83fd09](https://github.com/godotengine/godot-cpp/tree/e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77)|C++ 绑定，以旧版 API 子集面向 4.7.2 宿主|MIT；链接时保留上游版权和许可|
+|godot-cpp|[10.0.0-stable，507ed9d](https://github.com/godotengine/godot-cpp/tree/507ed9d840c01a3c5b2a39af8bb4000bfac30bf5)|C++ 绑定，指定 4.7 API，运行于 4.7.2 宿主|MIT；链接时保留上游版权和许可|
 |CMake|[上游](https://cmake.org/licensing/)，3.22+|生成本机构建|BSD-3-Clause 及捆绑组件；工具本身不随 PoC 发行|
 |Ninja|[上游](https://github.com/ninja-build/ninja)|构建执行器|Apache-2.0；工具本身不随 PoC 发行|
 |cargo-nextest|[0.9.152](https://github.com/nextest-rs/nextest)|独立 Rust 测试运行器|MIT / Apache-2.0；工具本身不随 PoC 发行|
@@ -63,3 +63,5 @@ Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion �
 |[zerocopy 0.8.66](https://crates.io/crates/zerocopy/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
 |[zerocopy-derive 0.8.66](https://crates.io/crates/zerocopy-derive/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
 |[zmij 1.0.23](https://crates.io/crates/zmij/1.0.23)|MIT|
+
+Python 校验器及所有间接依赖的版本、源站与再分发条件见 [格式工具依赖初审](docs/formats/validator-dependencies.md)。
