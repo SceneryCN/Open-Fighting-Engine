@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ofe:ofa:1.0",
+  "type": "object",
+  "required": [
+    "format",
+    "format_version",
+    "id",
+    "loop",
+    "source",
+    "frames"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "OFA"
+    },
+    "format_version": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "loop": {
+      "type": "boolean"
+    },
+    "source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "sequence"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "image",
+            "columns",
+            "rows"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "sheet"
+            },
+            "image": {
+              "type": "string",
+              "minLength": 1,
+              "x-ofe-resource": "png"
+            },
+            "columns": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        }
+      ]
+    },
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "duration",
+          "origin",
+          "events"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "origin": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": -2147483648,
+                "maximum": 2147483647
+              },
+              "y": {
+                "type": "integer",
+                "minimum": -2147483648,
+                "maximum": 2147483647
+              }
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            }
+          },
+          "image": {
+            "type": "string",
+            "minLength": 1,
+            "x-ofe-resource": "png"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        }
+      },
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "kind": {
+                "const": "sheet"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "items": {
+              "required": [
+                "index"
+              ],
+              "not": {
+                "required": [
+                  "image"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "frames": {
+            "items": {
+              "required": [
+                "image"
+              ],
+              "not": {
+                "required": [
+                  "index"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

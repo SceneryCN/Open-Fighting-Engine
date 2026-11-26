@@ -1,0 +1,26 @@
+{
+  "format": "OFC",
+  "format_version": "2.0",
+  "id": "probe",
+  "author": "OFE contributors",
+  "license": "CC0-1.0",
+  "character": "character.json",
+  "attributes": "attributes.json",
+  "moves": [
+    "moves/tap.json"
+  ],
+  "animations": [
+    "animations/idle.json"
+  ],
+  "hitboxes": [
+    "hitboxes/body.json"
+  ],
+  "sounds": [],
+  "assets": [
+    "animations/assets/pixel.png"
+  ],
+  "licenses": [
+    "licenses/notice.txt"
+  ],
+  "dependencies": []
+}

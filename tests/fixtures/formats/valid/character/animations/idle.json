@@ -1,0 +1,20 @@
+{
+  "format": "OFA",
+  "format_version": "1.0",
+  "id": "idle",
+  "loop": true,
+  "source": {
+    "kind": "sequence"
+  },
+  "frames": [
+    {
+      "duration": 1,
+      "origin": {
+        "x": 0,
+        "y": 0
+      },
+      "events": [],
+      "image": "assets/pixel.png"
+    }
+  ]
+}

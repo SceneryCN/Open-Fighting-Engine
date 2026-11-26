@@ -1,0 +1,12 @@
+{
+  "id": "body",
+  "boxes": [
+    {
+      "kind": "hurt",
+      "x": 0,
+      "h": 0,
+      "width": 1,
+      "height": 1
+    }
+  ]
+}

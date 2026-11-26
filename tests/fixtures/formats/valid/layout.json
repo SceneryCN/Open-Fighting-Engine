@@ -1,0 +1,61 @@
+{
+  "format": "OFL",
+  "format_version": "1.0",
+  "id": "proof_layout",
+  "screens": {
+    "main_menu": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "main_menu"
+      }
+    ],
+    "character_select": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "character_select"
+      }
+    ],
+    "versus": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "versus"
+      }
+    ],
+    "battle_hud": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "battle_hud"
+      }
+    ],
+    "pause": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "pause"
+      }
+    ],
+    "result": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 0,
+        "y": 0,
+        "text": "result"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "format": "OFA",
+  "format_version": "1.0",
+  "id": "sheet",
+  "loop": false,
+  "source": {
+    "kind": "sheet",
+    "image": "assets/pixel.png",
+    "columns": 1,
+    "rows": 1
+  },
+  "frames": [
+    {
+      "duration": 1,
+      "origin": {
+        "x": 0,
+        "y": 0
+      },
+      "events": [],
+      "index": 0
+    }
+  ]
+}

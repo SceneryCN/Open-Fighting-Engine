@@ -1,0 +1,29 @@
+# OFE 开发目录格式 1.0
+
+四个根文档使用 UTF-8 JSON、大小写敏感的 format 和精确字符串版本 1.0。对应 Schema 存放于 formats 下的同名小写目录。每个 Schema 使用 Draft 2020-12；x-ofe-resource 是校验器处理的本地资源类型标注。标准校验器可独立检查结构。OFE 工具额外执行引用、路径和跨字段检查。[Draft 2020-12](https://json-schema.org/draft/2020-12)
+
+| 根格式 | 数据与单位 |
+|---|---|
+| OFC | manifest.json 索引角色元数据、最大生命/能量、招式、OFA、判定框、音效、资源、许可证与依赖。招式的启动、有效、收招、硬直、停止、无敌时间均以 tick 计。取消窗口起止均包含端点；armor 为吸收次数，能量与伤害为非负整数；pushback 为有符号 X 位移。lane_rule 使用四种既定枚举，只有 DEPTH_RANGE 需非负 depth_range。框的局部坐标以角色原点计，宽高均为正。 |
+| OFA | source.kind 为 sequence 时，每帧 image 引用一张 PNG；为 sheet 时，source 包含 PNG、网格行列数，每帧按行优先、从零起的 index 索引网格。duration 为正整数 tick。origin 是相对该帧左上角的像素锚点，events 为表现事件标识符。 |
+| OGP | characters 指向 OFC manifest，layout 指向 OFL，stages、audio、fonts、theme 指向本地资源。modes 可声明 training、1v1、2v2、ffa。dependencies 声明 id 和版本字符串，P0 无包解析器。 |
+| OFL | 六个屏幕均须存在，每个屏幕列出元素；屏幕内元素 id 唯一。元素 type 为 label、image、button 或 bar，x 和 y 是像素布局坐标。可设置 text 和本地 asset。 |
+
+单个资源路径从引用它的文档所在目录向下解析，使用 / 分隔。绝对路径、盘符、点路径段、空路径段、反斜线及越界符号链接均被拒绝。OFC 的相邻子目录通过 manifest 索引；动画图像可置于动画目录的 assets 子目录。校验递归检查有类型的引用；音频、字体、舞台与主题文件在 P0 检查文件存在性。PNG 附加签名检查。
+
+1.0 校验器要求所有必填字段存在且拒绝额外字段。格式演进须发布新 Schema 和迁移说明，跨版本读取前应显式迁移。发布用 ZIP 打包及用运行时解释招式、动画、布局留待对应阶段。
+
+## 复现
+
+在仓库根使用 Python 3.12 创建虚拟环境。示例为 POSIX shell；Windows 激活文件为 `.venv\Scripts\Activate.ps1`。
+
+```sh
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
+python tools/ofe-validator/ofe.py validate tests/fixtures/formats/valid/project.json
+python tools/ofe-validator/ofe.py validate tests/fixtures/formats/invalid/ogp.json
+python -m unittest discover -s tests/formats -v
+```
+
+合法项目将校验完整角色、动画与布局引用链。非法 OGP 在 `#/modes/0` 定位未登记的模式值 online。退出码 0 表示校验通过，1 表示输入、结构、文件或引用错误，2 表示命令参数错误。合法精灵表动画另见 tests/fixtures/formats/valid/character/animations/sheet.json。本版命令接收入口文档路径。
