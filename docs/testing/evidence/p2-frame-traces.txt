@@ -1,0 +1,7 @@
+trace rollback_retry frames=64 hash=cfbd04c586dff581
+trace settlement_retry frames=64 hash=a6e37579fc7cf2b0
+trace idle frames=6000 hash=e38f34fd415a727c
+trace twelve_contacts frames=6000 hash=f189aa9190ac5088
+trace live_1024 frames=6000 hash=89b62f06bf468ec9
+trace live_4096 frames=6000 hash=93f3ab2285d2194f
+trace burst frames=1 hash=4ebdda61c11a5f8e
