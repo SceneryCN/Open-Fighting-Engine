@@ -1,0 +1,10 @@
+/target/
+/build/
+/.deps/
+.godot/
+__pycache__/
+/.venv/
+*.dylib
+*.dll
+*.so
+.DS_Store

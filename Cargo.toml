@@ -1,0 +1,8 @@
+[workspace]
+members = ["engine/combat-core", "integrations/godot/bridge"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "MPL-2.0"
+rust-version = "1.100"
