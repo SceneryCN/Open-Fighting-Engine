@@ -270,9 +270,37 @@ impl Clip {
 #[derive(Debug, Clone)]
 pub struct Player<'a> {
     clip: &'a Clip,
+    cursor: Cursor,
+}
+
+/// Owned tick position for a clip stored by a host. Use a fresh cursor when changing clips.
+#[derive(Debug, Clone, Default)]
+pub struct Cursor {
     index: usize,
     spent: u32,
     finished: bool,
+}
+
+impl Cursor {
+    /// Currently visible frame.
+    pub fn frame_index(&self) -> usize {
+        self.index
+    }
+    /// Consume one presentation tick on this cursor's clip.
+    pub fn tick<'a>(&mut self, clip: &'a Clip) -> &'a [String] {
+        if self.finished {
+            return &[];
+        }
+        if self.spent == clip.frames[self.index].duration {
+            self.index = (self.index + 1) % clip.frames.len();
+            self.spent = 0;
+        }
+        let frame = &clip.frames[self.index];
+        self.spent += 1;
+        self.finished =
+            !clip.looping && self.index + 1 == clip.frames.len() && self.spent == frame.duration;
+        if self.spent == 1 { &frame.events } else { &[] }
+    }
 }
 
 impl<'a> Player<'a> {
@@ -280,34 +308,19 @@ impl<'a> Player<'a> {
     pub fn new(clip: &'a Clip) -> Self {
         Self {
             clip,
-            index: 0,
-            spent: 0,
-            finished: false,
+            cursor: Cursor::default(),
         }
     }
-    /// Index of the currently displayed frame.
+    /// Currently displayed frame.
     pub fn frame_index(&self) -> usize {
-        self.index
+        self.cursor.frame_index()
     }
-    /// True after a non-looping final frame consumed its full duration.
+    /// Whether the last frame of a non-looping clip has finished.
     pub fn finished(&self) -> bool {
-        self.finished
+        self.cursor.finished
     }
-    /// Consume one time unit and return this frame's entry events. Repeated ticks on a
-    /// finished clip keep the last frame visible and return an empty event slice.
+    /// Consume a time unit and return this frame's entry events.
     pub fn tick(&mut self) -> &[String] {
-        if self.finished {
-            return &[];
-        }
-        if self.spent == self.clip.frames[self.index].duration {
-            self.index = (self.index + 1) % self.clip.frames.len();
-            self.spent = 0;
-        }
-        let frame = &self.clip.frames[self.index];
-        self.spent += 1;
-        self.finished = !self.clip.looping
-            && self.index + 1 == self.clip.frames.len()
-            && self.spent == frame.duration;
-        if self.spent == 1 { &frame.events } else { &[] }
+        self.cursor.tick(self.clip)
     }
 }
