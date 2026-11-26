@@ -567,3 +567,113 @@ fn active_enemy_facing_prefers_distance_then_lowest_id() {
     tick(&mut game, &[]);
     assert_eq!(who(&game, 22).fighter.facing, -1);
 }
+
+#[test]
+fn legacy_duel_retains_facing_after_winner_walks_past_ko_opponent() {
+    let attacker = actor(1, 1, 0, vec![strike()]).base;
+    let mut defender = actor(2, 2, 1, vec![strike()]).base;
+    defender.max_health = 1;
+    let mut duel = Duel::new(DuelConfig {
+        fighters: [attacker, defender],
+        lane: LaneConfig {
+            startup: 1,
+            travel: 2,
+            recovery: 1,
+            cooldown: 2,
+            interruptible: true,
+        },
+    })
+    .unwrap();
+    duel.step(
+        1,
+        [
+            Controls {
+                attack: true,
+                ..Default::default()
+            },
+            Controls::default(),
+        ],
+    )
+    .unwrap();
+    assert_eq!(duel.fighters()[1].state, State::Ko);
+    for frame in 2..=5 {
+        duel.step(frame, [Controls::default(); 2]).unwrap();
+    }
+    duel.step(
+        6,
+        [
+            Controls {
+                axis: 1,
+                ..Default::default()
+            },
+            Controls::default(),
+        ],
+    )
+    .unwrap();
+    assert!(duel.fighters()[0].position.x > duel.fighters()[1].position.x);
+    duel.step(7, [Controls::default(); 2]).unwrap();
+    assert_eq!(duel.fighters()[0].facing, -1);
+}
+
+#[test]
+fn invulnerability_expires_and_armor_absorbs_exactly_one_reaction() {
+    let mut flurry = strike();
+    flurry.base.active = 4;
+    flurry.windows = (0..4)
+        .map(|age| Window {
+            start: age,
+            end: age,
+        })
+        .collect();
+    let mut brace = strike();
+    brace.base.startup = 8;
+    brace.invulnerability = 2;
+    brace.armor = 1;
+    let mut game = arena(vec![
+        actor(1, 1, 0, vec![flurry]),
+        actor(2, 2, 2, vec![brace]),
+    ]);
+    tick(&mut game, &[attack(1, 0), attack(2, 0)]);
+    assert_eq!(who(&game, 2).fighter.health, 60);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 60);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 53);
+    assert_eq!(who(&game, 2).move_index, Some(0));
+    assert!(game.events().iter().any(|e| matches!(
+        e,
+        ArenaEvent::Armored {
+            attacker: 1,
+            target: 2
+        }
+    )));
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 46);
+    assert_eq!(who(&game, 2).fighter.state, State::Hitstun);
+}
+
+#[test]
+fn mutual_throws_and_lethal_armored_hit_still_commit() {
+    let mut grab = strike();
+    grab.kind = MoveKind::Throw;
+    let mut game = arena(vec![
+        actor(1, 1, 0, vec![grab.clone()]),
+        actor(2, 2, 2, vec![grab]),
+    ]);
+    tick(&mut game, &[attack(2, 0), attack(1, 0)]);
+    assert_eq!(count_hits(&game), 2);
+    assert!(
+        game.fighters()
+            .iter()
+            .all(|f| f.fighter.state == State::Hitstun && f.fighter.health == 53)
+    );
+    let mut brace = strike();
+    brace.armor = 1;
+    brace.base.startup = 4;
+    let mut target = actor(2, 2, 2, vec![brace]);
+    target.base.max_health = 1;
+    let mut game = arena(vec![actor(1, 1, 0, vec![strike()]), target]);
+    tick(&mut game, &[attack(2, 0), attack(1, 0)]);
+    assert_eq!(who(&game, 2).fighter.state, State::Ko);
+    assert_eq!(who(&game, 2).fighter.health, 0);
+}
