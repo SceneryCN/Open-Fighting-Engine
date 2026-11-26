@@ -204,10 +204,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "ofe-animation-runtime"
+version = "0.1.0"
+dependencies = [
+ "ofe-resource-runtime",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "ofe-bridge"
 version = "0.1.0"
 dependencies = [
  "ofe-combat-core",
+]
+
+[[package]]
+name = "ofe-character-runtime"
+version = "0.1.0"
+dependencies = [
+ "ofe-animation-runtime",
+ "ofe-combat-core",
+ "ofe-resource-runtime",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -218,11 +238,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "ofe-p3-qa"
+version = "0.1.0"
+dependencies = [
+ "ofe-animation-runtime",
+ "ofe-character-runtime",
+ "ofe-resource-runtime",
+ "serde_json",
+]
+
+[[package]]
+name = "ofe-resource-runtime"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "ofe-sim"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "ofe-character-runtime",
  "ofe-combat-core",
+ "ofe-resource-runtime",
  "serde",
  "serde_json",
 ]
