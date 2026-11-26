@@ -1,0 +1,65 @@
+# P0 依赖清单
+Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion 及后续表内第三方 crate 属于测试／基准依赖。所有 Cargo 源包由 Cargo.lock 记录版本及校验和。
+
+|组件|版本 / 来源|用途|许可与再分发条件|
+|---|---|---|---|
+|Rust / Cargo|[1.100.0](https://github.com/rust-lang/rust/tree/1.100.0)|核心、静态库和测试|MIT / Apache-2.0；随标准库再分发保留适用声明，另见工具链各组件通知|
+|Godot|[4.7.2 stable](https://github.com/godotengine/godot/tree/4.7.2-stable)|宿主、验证与导出模板|MIT；保留版权、LICENSE.txt 和各集成组件的 COPYRIGHT.txt|
+|godot-cpp|[godot-4.5-stable，e83fd09](https://github.com/godotengine/godot-cpp/tree/e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77)|C++ 绑定，以旧版 API 子集面向 4.7.2 宿主|MIT；链接时保留上游版权和许可|
+|CMake|[上游](https://cmake.org/licensing/)，3.22+|生成本机构建|BSD-3-Clause 及捆绑组件；工具本身不随 PoC 发行|
+|Ninja|[上游](https://github.com/ninja-build/ninja)|构建执行器|Apache-2.0；工具本身不随 PoC 发行|
+|cargo-nextest|[0.9.152](https://github.com/nextest-rs/nextest)|独立 Rust 测试运行器|MIT / Apache-2.0；工具本身不随 PoC 发行|
+|clang-format|[LLVM](https://llvm.org/)|C++ 格式检查|Apache-2.0 WITH LLVM-exception；工具本身不随 PoC 发行|
+
+## Cargo 开发依赖（含所有目标）
+下表来自锁定环境的 cargo metadata --locked。各版本页面链接其源代码与许可。所列许可允许在满足各自条件后再分发；常见条件包括保留许可、版权和适用 NOTICE。Unicode 数据另附相应声明。本次不分发这些工具的二进制。
+
+|名称和版本|上游声明的许可|
+|---|---|
+|[aho-corasick 1.1.5](https://crates.io/crates/aho-corasick/1.1.5)|Unlicense OR MIT|
+|[anes 0.1.6](https://crates.io/crates/anes/0.1.6)|MIT OR Apache-2.0|
+|[anstyle 1.0.14](https://crates.io/crates/anstyle/1.0.14)|MIT OR Apache-2.0|
+|[autocfg 1.5.1](https://crates.io/crates/autocfg/1.5.1)|Apache-2.0 OR MIT|
+|[cast 0.3.0](https://crates.io/crates/cast/0.3.0)|MIT OR Apache-2.0|
+|[cfg-if 1.0.5](https://crates.io/crates/cfg-if/1.0.5)|MIT OR Apache-2.0|
+|[ciborium 0.2.2](https://crates.io/crates/ciborium/0.2.2)|Apache-2.0|
+|[ciborium-io 0.2.2](https://crates.io/crates/ciborium-io/0.2.2)|Apache-2.0|
+|[ciborium-ll 0.2.2](https://crates.io/crates/ciborium-ll/0.2.2)|Apache-2.0|
+|[clap 4.6.10](https://crates.io/crates/clap/4.6.10)|MIT OR Apache-2.0|
+|[clap_builder 4.6.10](https://crates.io/crates/clap_builder/4.6.10)|MIT OR Apache-2.0|
+|[clap_lex 1.1.2](https://crates.io/crates/clap_lex/1.1.2)|MIT OR Apache-2.0|
+|[criterion 0.5.1](https://crates.io/crates/criterion/0.5.1)|Apache-2.0 OR MIT|
+|[criterion-plot 0.5.0](https://crates.io/crates/criterion-plot/0.5.0)|MIT/Apache-2.0|
+|[crunchy 0.2.4](https://crates.io/crates/crunchy/0.2.4)|MIT|
+|[either 1.19.0](https://crates.io/crates/either/1.19.0)|MIT OR Apache-2.0|
+|[half 2.7.1](https://crates.io/crates/half/2.7.1)|MIT OR Apache-2.0|
+|[hermit-abi 0.5.3](https://crates.io/crates/hermit-abi/0.5.3)|MIT OR Apache-2.0|
+|[is-terminal 0.4.17](https://crates.io/crates/is-terminal/0.4.17)|MIT|
+|[itertools 0.10.5](https://crates.io/crates/itertools/0.10.5)|MIT/Apache-2.0|
+|[itoa 1.0.19](https://crates.io/crates/itoa/1.0.19)|MIT OR Apache-2.0|
+|[libc 0.2.191](https://crates.io/crates/libc/0.2.191)|MIT OR Apache-2.0|
+|[memchr 2.8.3](https://crates.io/crates/memchr/2.8.3)|Unlicense OR MIT|
+|[num-traits 0.2.19](https://crates.io/crates/num-traits/0.2.19)|MIT OR Apache-2.0|
+|[once_cell 1.21.4](https://crates.io/crates/once_cell/1.21.4)|MIT OR Apache-2.0|
+|[oorandom 11.1.5](https://crates.io/crates/oorandom/11.1.5)|MIT|
+|[proc-macro2 1.0.107](https://crates.io/crates/proc-macro2/1.0.107)|MIT OR Apache-2.0|
+|[quote 1.0.47](https://crates.io/crates/quote/1.0.47)|MIT OR Apache-2.0|
+|[regex 1.13.2](https://crates.io/crates/regex/1.13.2)|MIT OR Apache-2.0|
+|[regex-automata 0.4.19](https://crates.io/crates/regex-automata/0.4.19)|MIT OR Apache-2.0|
+|[regex-syntax 0.8.12](https://crates.io/crates/regex-syntax/0.8.12)|MIT OR Apache-2.0|
+|[same-file 1.0.6](https://crates.io/crates/same-file/1.0.6)|Unlicense/MIT|
+|[serde 1.0.229](https://crates.io/crates/serde/1.0.229)|MIT OR Apache-2.0|
+|[serde_core 1.0.229](https://crates.io/crates/serde_core/1.0.229)|MIT OR Apache-2.0|
+|[serde_derive 1.0.229](https://crates.io/crates/serde_derive/1.0.229)|MIT OR Apache-2.0|
+|[serde_json 1.0.154](https://crates.io/crates/serde_json/1.0.154)|MIT OR Apache-2.0|
+|[syn 2.0.119](https://crates.io/crates/syn/2.0.119)|MIT OR Apache-2.0|
+|[syn 3.0.10](https://crates.io/crates/syn/3.0.10)|MIT OR Apache-2.0|
+|[tinytemplate 1.2.1](https://crates.io/crates/tinytemplate/1.2.1)|Apache-2.0 OR MIT|
+|[unicode-ident 1.0.27](https://crates.io/crates/unicode-ident/1.0.27)|(MIT OR Apache-2.0) AND Unicode-3.0|
+|[walkdir 2.5.1](https://crates.io/crates/walkdir/2.5.1)|Unlicense/MIT|
+|[winapi-util 0.1.11](https://crates.io/crates/winapi-util/0.1.11)|Unlicense OR MIT|
+|[windows-link 0.2.1](https://crates.io/crates/windows-link/0.2.1)|MIT OR Apache-2.0|
+|[windows-sys 0.61.2](https://crates.io/crates/windows-sys/0.61.2)|MIT OR Apache-2.0|
+|[zerocopy 0.8.66](https://crates.io/crates/zerocopy/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
+|[zerocopy-derive 0.8.66](https://crates.io/crates/zerocopy-derive/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
+|[zmij 1.0.23](https://crates.io/crates/zmij/1.0.23)|MIT|
