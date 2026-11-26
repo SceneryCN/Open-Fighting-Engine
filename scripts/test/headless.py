@@ -1,4 +1,4 @@
-"""Import and run the P0, P4, P5 and P6 scenes (or test its exported executable) with a timeout."""
+"""Import and run the P0, P4, P5, P6 and P8 scenes (or test its exported executable) with a timeout."""
 import argparse
 from pathlib import Path
 import plistlib
@@ -15,7 +15,7 @@ def run(command, marker=None):
     proc = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           timeout=90, text=True, errors="replace")
     print(proc.stdout, end="")
-    if proc.returncode or (marker and marker not in proc.stdout.splitlines()):
+    if proc.returncode or "SCRIPT ERROR:" in proc.stdout or (marker and marker not in proc.stdout.splitlines()):
         sys.exit(proc.returncode or 1)
 
 
@@ -45,6 +45,7 @@ if __name__ == "__main__":
     run(base + ["--", "--p0-test"], marker="OFE_P0_PASS")
     run(base + ["--", "--p4-test"], marker="OFE_P4_PASS")
     run(base + ["--", "--p5-test"], marker="OFE_P5_PASS")
+    run(base + ["--", "--p8-test"], marker="OFE_P8_KEYS_PASS")
     with TemporaryDirectory(prefix="ofe-p6-") as scratch:
         tape = Path(scratch).resolve() / "training.ofr"
         record = base + ["--", "--p6-test", f"--qa-replay={tape}"]
