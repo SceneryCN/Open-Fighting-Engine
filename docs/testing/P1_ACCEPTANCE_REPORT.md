@@ -33,7 +33,7 @@
 |确定性|独立运行两次 240 帧输入，每帧对比两个 fighter 和有序事件列表，全部相同。|
 |OFC 与模拟器|amber、indigo 均通过独立 Schema 校验。脚本头两帧同帧互击并分别造成 15 与 12 伤害，之后出现格挡、跳跃、切线；第 26 帧出现跨线单向命中，最终 HP 为 36/60。stdin 提交 A G 后 - G 同样出现 Blocked。|
 |独立包|本机 release 打包及解包成功，只用归档内的 ofe-sim 和 duel.frames 从新目录运行，终帧 26、HP 36/60，与仓库内执行一致。|
-|P0 回归|Rust v1 快照哈希与 ABI 测试通过。重新链接含 P1 核心的 GDExtension，CTest 两项通过；真实 Godot 首次导入及场景自检输出 OFE_P0_PASS。原 12 项格式测试均通过。|
+|P0 回归|Rust v1 快照哈希与 ABI 测试通过。重新链接含 P1 核心的 GDExtension，CTest 两项通过；真实 Godot 项目导入及场景自检输出 OFE_P0_PASS。原 12 项格式测试均通过。|
 |基准|Criterion，release，预热 1 秒、测量 2 秒、20 组样本。双人空闲 tick 17.751–17.920 ns，同帧双向命中 tick 27.975–28.957 ns。计时包含模拟步骤，互击样例准备移至计时区间外。|
 
 在全部工作区运行 rustfmt、Clippy（警告作错误）、cargo test 和 cargo-nextest。nextest 结果为 33 通过、0 跳过，其中 13 项来自独立黑盒 P1 套件。常规依赖树中 ofe-combat-core 依赖 Rust 标准库。
