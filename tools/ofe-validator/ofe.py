@@ -5,6 +5,11 @@ import argparse
 import json
 import math
 import sys
+import struct
+import subprocess
+import zipfile
+import zlib
+from ofc_archive import open_source, write_package
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from pathlib import Path, PureWindowsPath
@@ -131,12 +136,15 @@ def relations(kind, data):
                 ids.add(element["id"])
 
 
-def validate(path, expected=None, checked=None):
+def validate(path, expected=None, checked=None, files=None, label=None):
     """Validate a document and all typed references; raise Invalid on failure."""
     if checked is None:
         checked = set()
     path = path.resolve()
-    if (path, expected) in checked:
+    if files is not None:
+        files[label] = path
+    key = (path, expected, label)
+    if key in checked:
         return
     data = read_document(path)
     actual = data.get("format") if isinstance(data, dict) else None
@@ -152,29 +160,96 @@ def validate(path, expected=None, checked=None):
     for parts, ref, target_kind in resources(schema, data, schema):
         try:
             target = resource_path(path.parent, ref)
+            child = str(Path(label).parent.joinpath(ref).as_posix()) if label else None
+            if files is not None:
+                files[child] = target
             if target_kind == "png":
                 with target.open("rb") as stream:
-                    if stream.read(8) != b"\x89PNG\r\n\x1a\n":
-                        raise Invalid("expected PNG signature")
+                    header = stream.read(33)
+                if (len(header) != 33 or header[:16] != b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR"
+                        or zlib.crc32(header[12:29]) != int.from_bytes(header[29:33], "big")):
+                    raise Invalid("invalid PNG IHDR header")
+                width, height = struct.unpack(">II", header[16:24])
+                if not (0 < width < 2**31 and 0 < height < 2**31):
+                    raise Invalid("invalid PNG dimensions")
+                if kind == "OFA" and data["source"]["kind"] == "sheet":
+                    source = data["source"]
+                    if width % source["columns"] or height % source["rows"]:
+                        raise Invalid("PNG dimensions must be divisible by sheet columns and rows")
             elif target_kind != "file":
-                validate(target, target_kind, checked)
+                validate(target, target_kind, checked, files, child)
         except (Invalid, OSError) as exc:
             raise Invalid(f"{path}{pointer(parts)} -> {exc}") from exc
-    checked.add((path, expected))
+    checked.add(key)
+
+
+def character(root):
+    files = {}
+    manifest_path = resource_path(root, "manifest.json")
+    validate(manifest_path, "OFC", files=files, label="manifest.json")
+    manifest = read_document(manifest_path)
+    info = {k: manifest[k] for k in ("id", "author", "license", "dependencies")}
+    groups = {}
+    for key in ("moves", "animations", "hitboxes"):
+        entries = [read_document(files[name]) for name in manifest[key]]
+        groups[key] = {item["id"]: item for item in entries}
+        if len(groups[key]) != len(entries):
+            raise Invalid(f"duplicate {key} id")
+        info[key] = list(groups[key])
+    profile_path = root / "move_profile.json"
+    profiles = {}
+    if profile_path.exists() or profile_path.is_symlink():
+        validate(resource_path(root, "move_profile.json"), "OFE_MOVE_PROFILE",
+                 files=files, label="move_profile.json")
+        profiles = {m["id"]: m for m in read_document(profile_path)["moves"]}
+        if profiles.keys() != groups["moves"].keys():
+            raise Invalid("move_profile.json IDs must match manifest moves")
+    for move_id, move in groups["moves"].items():
+        end = move["startup"] + move["active"]
+        profile = profiles.get(move_id, {})
+        if any(w["start"] < move["startup"] or w["end"] >= end for w in profile.get("windows", [])):
+            raise Invalid(f"{move_id}: hit window outside active frames")
+        if any(w["end"] >= end + move["recovery"] for w in move["cancel_windows"]):
+            raise Invalid(f"{move_id}: cancel window outside move")
+        if bool(profile.get("cancel_into")) != bool(move["cancel_windows"]):
+            raise Invalid(f"{move_id}: cancel windows require matching targets")
+    return files, info
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    check = sub.add_parser("validate", help="validate OFE documents, move profiles and resource references")
-    check.add_argument("document", type=Path)
+    for command in ("validate", "inspect", "run", "package"):
+        cmd = sub.add_parser(command)
+        cmd.add_argument("source", type=Path)
+        if command == "package":
+            cmd.add_argument("output", type=Path)
+        if command == "run":
+            cmd.add_argument("--simulator", type=Path, required=True)
+            cmd.add_argument("--script", type=Path)
     args = parser.parse_args()
     try:
-        validate(args.document)
-    except (Invalid, OSError, RuntimeError) as exc:
+        if args.command == "validate" and args.source.is_file() and args.source.suffix.lower() != ".ofc":
+            validate(args.source)
+        else:
+            if args.command == "package" and not args.source.is_dir():
+                raise Invalid("package expects a character directory")
+            with open_source(args.source) as root:
+                files, info = character(root)
+                if args.command == "inspect":
+                    print(json.dumps(info, ensure_ascii=False))
+                    return 0
+                if args.command == "package":
+                    write_package(files, args.output)
+                if args.command == "run":
+                    command = [args.simulator.resolve(), "--character", root]
+                    if args.script:
+                        command += ["--script", args.script]
+                    return subprocess.run(command).returncode
+    except (ValueError, OSError, RuntimeError, zipfile.BadZipFile, EOFError, zlib.error) as exc:
         print(exc, file=sys.stderr)
         return 1
-    print(f"OK {args.document}")
+    print(f"OK {args.source}")
     return 0
 
 
