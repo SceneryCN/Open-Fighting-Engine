@@ -6,6 +6,8 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+ofe-character-runtime = { path = "../../engine/character-runtime" }
+ofe-resource-runtime = { path = "../../engine/resource-runtime" }
 ofe-combat-core = { path = "../../engine/combat-core" }
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = { version = "=1.0.154", features = ["raw_value"] }
