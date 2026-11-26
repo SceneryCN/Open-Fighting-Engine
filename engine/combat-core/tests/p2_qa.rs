@@ -481,3 +481,89 @@ fn rejects_bad_orders_energy_windows_and_profile_combinations() {
         );
     }
 }
+
+#[test]
+fn projectile_overflow_rolls_back_age_energy_fighters_and_last_events() {
+    let mut shot = strike();
+    shot.kind = MoveKind::Projectile {
+        speed: i32::MAX,
+        lifetime: 3,
+    };
+    shot.base.recovery = 0;
+    let mut game = arena(vec![
+        actor(1, 1, 10, vec![shot]),
+        actor(2, 2, 1000, vec![strike()]),
+    ]);
+    tick(&mut game, &[attack(1, 0)]);
+    let before = game.fighters().to_vec();
+    let projectiles = game.projectiles().to_vec();
+    let events = game.events().to_vec();
+    for _ in 0..2 {
+        assert_eq!(game.step(2, &[attack(2, 0)]), Err(DuelError::Overflow));
+        assert_eq!(game.frame(), 1);
+        assert_eq!(game.fighters(), before);
+        assert_eq!(game.projectiles(), projectiles);
+        assert_eq!(game.events(), events);
+    }
+}
+
+#[test]
+fn delayed_projectile_hit_cannot_confirm_a_different_action() {
+    let mut shot = strike();
+    shot.base.recovery = 0;
+    shot.kind = MoveKind::Projectile {
+        speed: 5,
+        lifetime: 5,
+    };
+    shot.base.hitbox = Rect {
+        x: 0,
+        h: 0,
+        width: 2,
+        height: 8,
+    };
+    let mut whiff = strike();
+    whiff.base.hitbox.width = 1;
+    whiff.base.hitbox.x = 0;
+    whiff.cancels = vec![Cancel {
+        window: Window { start: 2, end: 3 },
+        into: 2,
+    }];
+    let mut followup = strike();
+    followup.kind = MoveKind::Super;
+    followup.energy_cost = 10;
+    let mut game = arena(vec![
+        actor(1, 1, 0, vec![shot, whiff, followup]),
+        actor(2, 2, 11, vec![strike()]),
+    ]);
+    tick(&mut game, &[attack(1, 0)]);
+    tick(&mut game, &[attack(1, 1)]);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 53);
+    tick(&mut game, &[attack(1, 2)]);
+    assert_eq!(who(&game, 1).move_index, Some(1));
+    assert_eq!(who(&game, 1).energy, 10);
+}
+
+#[test]
+fn active_enemy_facing_prefers_distance_then_lowest_id() {
+    let mut game = arena(vec![
+        actor(22, 1, 0, vec![strike()]),
+        actor(1, 1, -1, vec![strike()]),
+        actor(6, 2, -9, vec![strike()]),
+        actor(3, 2, 9, vec![strike()]),
+    ]);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 22).fighter.facing, 1);
+    tick(
+        &mut game,
+        &[Command {
+            controls: Controls {
+                axis: 1,
+                ..Default::default()
+            },
+            ..cmd(6)
+        }],
+    );
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 22).fighter.facing, -1);
+}
