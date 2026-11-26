@@ -11,7 +11,8 @@ fn duel_ticks(c: &mut Criterion) {
         attack: true,
         ..Controls::default()
     }; 2];
-    let new_duel = || Duel::new(sample_config().expect("valid sample OFCs")).expect("valid duel");
+    let config = sample_config().expect("valid sample OFCs");
+    let new_duel = || Duel::new(config).expect("valid duel");
     let start_attacks = || {
         let mut duel = new_duel();
         duel.step(1, attacks).unwrap();
