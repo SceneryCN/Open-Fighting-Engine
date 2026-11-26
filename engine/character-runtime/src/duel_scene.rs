@@ -9,43 +9,61 @@ use ofe_combat_core::{
 use ofe_resource_runtime::json_integer;
 use serde::Deserialize;
 
+/// Initial integer world coordinates.
 #[derive(Deserialize)]
 pub struct Spawn {
+    /// Horizontal position.
     #[serde(deserialize_with = "json_integer::read")]
     pub x: i32,
+    /// Depth position.
     #[serde(deserialize_with = "json_integer::read")]
     pub z: i32,
+    /// Height above the ground.
     #[serde(deserialize_with = "json_integer::read")]
     pub h: i32,
 }
 
+/// Motion settings for one side of a duel.
 #[derive(Deserialize)]
 pub struct Movement {
+    /// Initial position.
     pub spawn: Spawn,
+    /// Horizontal speed per tick.
     #[serde(deserialize_with = "json_integer::read")]
     pub walk_speed: i32,
+    /// Initial vertical speed per jump.
     #[serde(deserialize_with = "json_integer::read")]
     pub jump_speed: i32,
+    /// Downward acceleration per tick.
     #[serde(deserialize_with = "json_integer::read")]
     pub gravity: i32,
 }
 
+/// Shared lane-transition timing.
 #[derive(Deserialize)]
 pub struct Lane {
+    /// Preparation ticks.
     #[serde(deserialize_with = "json_integer::read")]
     pub startup: u32,
+    /// Depth-motion ticks.
     #[serde(deserialize_with = "json_integer::read")]
     pub travel: u32,
+    /// Recovery ticks after travel.
     #[serde(deserialize_with = "json_integer::read")]
     pub recovery: u32,
+    /// Ticks before another switch can begin.
     #[serde(deserialize_with = "json_integer::read")]
     pub cooldown: u32,
+    /// Whether a hit can interrupt a switch.
     pub interruptible: bool,
 }
 
+/// Two-player scene layout.
 #[derive(Deserialize)]
 pub struct Scene {
+    /// Motion parameters in player order.
     pub fighters: [Movement; 2],
+    /// Lane-switch parameters.
     pub lane: Lane,
 }
 

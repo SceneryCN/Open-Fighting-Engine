@@ -266,28 +266,39 @@ impl Clip {
     }
 }
 
-/// Tick-driven animation playback independent of combat simulation.
-#[derive(Debug, Clone)]
-pub struct Player<'a> {
-    clip: &'a Clip,
-    cursor: Cursor,
-}
+/// A player borrowing a clip for its lifetime.
+pub type Player<'a> = Playback<&'a Clip>;
 
-/// Owned tick position for a clip stored by a host. Use a fresh cursor when changing clips.
-#[derive(Debug, Clone, Default)]
-pub struct Cursor {
+/// Tick-driven playback that retains either a borrowed clip or a shared handle.
+#[derive(Debug, Clone)]
+pub struct Playback<C> {
+    clip: C,
     index: usize,
     spent: u32,
     finished: bool,
 }
 
-impl Cursor {
-    /// Currently visible frame.
+impl<C: std::borrow::Borrow<Clip>> Playback<C> {
+    /// Begin with the first frame visible. Its events arrive on the first tick.
+    pub fn new(clip: C) -> Self {
+        Self {
+            clip,
+            index: 0,
+            spent: 0,
+            finished: false,
+        }
+    }
+    /// Currently displayed frame.
     pub fn frame_index(&self) -> usize {
         self.index
     }
-    /// Consume one presentation tick on this cursor's clip.
-    pub fn tick<'a>(&mut self, clip: &'a Clip) -> &'a [String] {
+    /// True once a non-looping final frame consumes its full duration.
+    pub fn finished(&self) -> bool {
+        self.finished
+    }
+    /// Consume a time unit and return this frame's entry events.
+    pub fn tick(&mut self) -> &[String] {
+        let clip = self.clip.borrow();
         if self.finished {
             return &[];
         }
@@ -300,27 +311,5 @@ impl Cursor {
         self.finished =
             !clip.looping && self.index + 1 == clip.frames.len() && self.spent == frame.duration;
         if self.spent == 1 { &frame.events } else { &[] }
-    }
-}
-
-impl<'a> Player<'a> {
-    /// Begin with the first frame visible. Its events arrive on the first tick.
-    pub fn new(clip: &'a Clip) -> Self {
-        Self {
-            clip,
-            cursor: Cursor::default(),
-        }
-    }
-    /// Currently displayed frame.
-    pub fn frame_index(&self) -> usize {
-        self.cursor.frame_index()
-    }
-    /// Whether the last frame of a non-looping clip has finished.
-    pub fn finished(&self) -> bool {
-        self.cursor.finished
-    }
-    /// Consume a time unit and return this frame's entry events.
-    pub fn tick(&mut self) -> &[String] {
-        self.cursor.tick(self.clip)
     }
 }
