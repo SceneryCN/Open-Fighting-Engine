@@ -1,0 +1,59 @@
+{
+  "host": "macOS ARM64, Apple M1 Max",
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "version": "0.1.0-rc.1",
+  "keyboard_editor": [
+    "OFE_P8_INPUT distinct_keys=37 seats=4 native_move_cases=7",
+    "OFE_P8_KEYS_PASS"
+  ],
+  "unpacked_export": [
+    "OFE_P0_PASS",
+    "OFE_P4_PASS",
+    "OFE_P5_PASS",
+    "OFE_P8_INPUT distinct_keys=37 seats=4 native_move_cases=7",
+    "OFE_P8_KEYS_PASS",
+    "OFE_P6_RECORDED 25",
+    "OFE_P6_PASS",
+    "verified 25 frames, final frame 25, hash 37639bfe3db9acfd",
+    "OFE_P6_PASS"
+  ],
+  "graphical_runs": {
+    "standalone_export": {
+      "display": "macOS",
+      "draw_max_us": 70547,
+      "draw_p95_us": 19153,
+      "draw_p99_us": 20787,
+      "fps": 59.511783184291,
+      "over_25ms": 4,
+      "samples": 600,
+      "simulation_ticks": 606.0
+    },
+    "extracted_game": {
+      "display": "macOS",
+      "draw_max_us": 23341,
+      "draw_p95_us": 20339,
+      "draw_p99_us": 21718,
+      "fps": 59.9928008638963,
+      "over_25ms": 0,
+      "samples": 600,
+      "simulation_ticks": 600.0
+    }
+  },
+  "packages": {
+    "ofe-author-kit.tar.gz": {
+      "sha256_local_build": "0d7988bc034270e328b8996d36a538115aec5a11969b1c62bba72a0f74b31c37",
+      "revision": "2e5acb7b797bcac0634419af5b806ef53a15ff5e",
+      "license_files_under_LICENSES": 3
+    },
+    "ofe-runtime-macos-arm64.tar.gz": {
+      "sha256_local_build": "ead854719cedb60fe3898484f079afee3647c9a75b7546ef87e1e488c95be98b",
+      "revision": "2e5acb7b797bcac0634419af5b806ef53a15ff5e",
+      "license_files_under_LICENSES": 29
+    },
+    "ofe-sim-macos-arm64.tar.gz": {
+      "sha256_local_build": "e4b749bbf421630e6831fe5841992273d1714c17598e410b19c50f909a79d189",
+      "revision": "2e5acb7b797bcac0634419af5b806ef53a15ff5e",
+      "license_files_under_LICENSES": 27
+    }
+  }
+}
