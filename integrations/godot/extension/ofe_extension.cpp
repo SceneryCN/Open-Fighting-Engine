@@ -20,7 +20,7 @@ class OFEBattle : public RefCounted {
 
     uint64_t token = 0;
 
-protected:
+  protected:
     static void _bind_methods() {
         ClassDB::bind_method(D_METHOD("open"), &OFEBattle::open);
         ClassDB::bind_method(D_METHOD("close"), &OFEBattle::close);
@@ -29,7 +29,7 @@ protected:
         ClassDB::bind_method(D_METHOD("read_state"), &OFEBattle::read_state);
     }
 
-public:
+  public:
     int64_t open() {
         if (token != 0) {
             return OFE_INVALID_ARGUMENT;
@@ -47,15 +47,13 @@ public:
 
     int64_t submit(int64_t frame, int64_t axis) {
         if (frame < 0 || axis < std::numeric_limits<int32_t>::min() ||
-                axis > std::numeric_limits<int32_t>::max()) {
+            axis > std::numeric_limits<int32_t>::max()) {
             return OFE_INVALID_ARGUMENT;
         }
         return ofe_v1_submit(token, static_cast<uint64_t>(frame), static_cast<int32_t>(axis));
     }
 
-    int64_t step() {
-        return ofe_v1_step(token);
-    }
+    int64_t step() { return ofe_v1_step(token); }
 
     Dictionary read_state() const {
         ofe_state_v1 state{};
@@ -97,7 +95,8 @@ static void uninitialize(ModuleInitializationLevel) {}
 
 extern "C" {
 GDExtensionBool GDE_EXPORT ofe_godot_init(GDExtensionInterfaceGetProcAddress get_proc_address,
-        GDExtensionClassLibraryPtr library, GDExtensionInitialization *initialization) {
+                                          GDExtensionClassLibraryPtr library,
+                                          GDExtensionInitialization *initialization) {
     godot::GDExtensionBinding::InitObject init(get_proc_address, library, initialization);
     init.register_initializer(godot::initialize);
     init.register_terminator(godot::uninitialize);
