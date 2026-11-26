@@ -614,3 +614,66 @@ fn legacy_duel_retains_facing_after_winner_walks_past_ko_opponent() {
     duel.step(7, [Controls::default(); 2]).unwrap();
     assert_eq!(duel.fighters()[0].facing, -1);
 }
+
+#[test]
+fn invulnerability_expires_and_armor_absorbs_exactly_one_reaction() {
+    let mut flurry = strike();
+    flurry.base.active = 4;
+    flurry.windows = (0..4)
+        .map(|age| Window {
+            start: age,
+            end: age,
+        })
+        .collect();
+    let mut brace = strike();
+    brace.base.startup = 8;
+    brace.invulnerability = 2;
+    brace.armor = 1;
+    let mut game = arena(vec![
+        actor(1, 1, 0, vec![flurry]),
+        actor(2, 2, 2, vec![brace]),
+    ]);
+    tick(&mut game, &[attack(1, 0), attack(2, 0)]);
+    assert_eq!(who(&game, 2).fighter.health, 60);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 60);
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 53);
+    assert_eq!(who(&game, 2).move_index, Some(0));
+    assert!(game.events().iter().any(|e| matches!(
+        e,
+        ArenaEvent::Armored {
+            attacker: 1,
+            target: 2
+        }
+    )));
+    tick(&mut game, &[]);
+    assert_eq!(who(&game, 2).fighter.health, 46);
+    assert_eq!(who(&game, 2).fighter.state, State::Hitstun);
+}
+
+#[test]
+fn mutual_throws_and_lethal_armored_hit_still_commit() {
+    let mut grab = strike();
+    grab.kind = MoveKind::Throw;
+    let mut game = arena(vec![
+        actor(1, 1, 0, vec![grab.clone()]),
+        actor(2, 2, 2, vec![grab]),
+    ]);
+    tick(&mut game, &[attack(2, 0), attack(1, 0)]);
+    assert_eq!(count_hits(&game), 2);
+    assert!(
+        game.fighters()
+            .iter()
+            .all(|f| f.fighter.state == State::Hitstun && f.fighter.health == 53)
+    );
+    let mut brace = strike();
+    brace.armor = 1;
+    brace.base.startup = 4;
+    let mut target = actor(2, 2, 2, vec![brace]);
+    target.base.max_health = 1;
+    let mut game = arena(vec![actor(1, 1, 0, vec![strike()]), target]);
+    tick(&mut game, &[attack(2, 0), attack(1, 0)]);
+    assert_eq!(who(&game, 2).fighter.state, State::Ko);
+    assert_eq!(who(&game, 2).fighter.health, 0);
+}
