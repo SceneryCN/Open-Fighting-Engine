@@ -1,0 +1,27 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+#ifndef OFE_V2_H
+#define OFE_V2_H
+#include "ofe_v1.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* P4 desktop match. Directory paths are NUL-terminated UTF-8 strings.
+ * Buffers are caller-owned, suitably aligned, exclusive and non-overlapping.
+ * A v2 token cannot be used by v1. The caller orders operations on a match. */
+int32_t ofe_v2_create(const char *p1_dir, const char *p2_dir, uint64_t *out);
+int32_t ofe_v2_destroy(uint64_t handle);
+/* Bits 0..6: left/right/jump/lane/attack/guard/dash. Bits 8..23 hold an
+ * explicit zero-based move index PLUS ONE. Other bits must be zero. */
+int32_t ofe_v2_step(uint64_t handle, uint64_t frame, uint32_t p1, uint32_t p2);
+/* JSON (no terminating NUL), or encoded PNG. Supply NULL,0 to query length.
+ * OFE_LIMIT reports required length without writing the byte buffer.
+ * Successful calls set length to the number of bytes written. */
+int32_t ofe_v2_snapshot(uint64_t handle, uint8_t *out, uint32_t capacity, uint32_t *length);
+int32_t ofe_v2_image(uint64_t handle, uint32_t image_id, uint8_t *out, uint32_t capacity,
+                     uint32_t *length);
+#ifdef __cplusplus
+}
+#endif
+#endif

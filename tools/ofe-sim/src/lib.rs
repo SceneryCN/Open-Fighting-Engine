@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Configuration adapter for the simulator's two schema-validated OFC fixtures.
-use ofe_character_runtime::CombatData;
+use ofe_character_runtime::{
+    CombatData,
+    duel_scene::{Lane, Movement, Scene, Spawn},
+};
 use ofe_combat_core::Position;
 use ofe_combat_core::duel::{DuelConfig, FighterConfig, LaneConfig};
 use ofe_resource_runtime::json_integer;
@@ -35,46 +38,6 @@ fn embedded(files: Files, path: &str) -> Result<&'static str, String> {
         .find(|(name, _)| *name == path)
         .map(|(_, text)| *text)
         .ok_or_else(|| format!("reference {path:?} is missing from the embedded OFC"))
-}
-
-#[derive(Deserialize)]
-struct Spawn {
-    #[serde(deserialize_with = "json_integer::read")]
-    x: i32,
-    #[serde(deserialize_with = "json_integer::read")]
-    z: i32,
-    #[serde(deserialize_with = "json_integer::read")]
-    h: i32,
-}
-
-#[derive(Deserialize)]
-struct Movement {
-    spawn: Spawn,
-    #[serde(deserialize_with = "json_integer::read")]
-    walk_speed: i32,
-    #[serde(deserialize_with = "json_integer::read")]
-    jump_speed: i32,
-    #[serde(deserialize_with = "json_integer::read")]
-    gravity: i32,
-}
-
-#[derive(Deserialize)]
-struct Lane {
-    #[serde(deserialize_with = "json_integer::read")]
-    startup: u32,
-    #[serde(deserialize_with = "json_integer::read")]
-    travel: u32,
-    #[serde(deserialize_with = "json_integer::read")]
-    recovery: u32,
-    #[serde(deserialize_with = "json_integer::read")]
-    cooldown: u32,
-    interruptible: bool,
-}
-
-#[derive(Deserialize)]
-struct Scene {
-    fighters: [Movement; 2],
-    lane: Lane,
 }
 
 fn fighter(files: Files, movement: Movement) -> Result<FighterConfig, String> {

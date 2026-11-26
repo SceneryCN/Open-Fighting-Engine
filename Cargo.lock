@@ -216,7 +216,10 @@ dependencies = [
 name = "ofe-bridge"
 version = "0.1.0"
 dependencies = [
+ "ofe-animation-runtime",
+ "ofe-character-runtime",
  "ofe-combat-core",
+ "serde_json",
 ]
 
 [[package]]

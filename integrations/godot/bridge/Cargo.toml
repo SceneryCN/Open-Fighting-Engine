@@ -10,3 +10,6 @@ crate-type = ["staticlib", "rlib"]
 
 [dependencies]
 ofe-combat-core = { path = "../../../engine/combat-core" }
+ofe-character-runtime = { path = "../../../engine/character-runtime" }
+ofe-animation-runtime = { path = "../../../engine/animation-runtime" }
+serde_json = "=1.0.154"

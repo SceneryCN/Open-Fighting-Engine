@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Character package loading, action profile resolution and native combat-data binding.
+pub mod duel_scene;
 mod moves;
 pub use moves::ResolvedMove;
 use ofe_animation_runtime::Clip;

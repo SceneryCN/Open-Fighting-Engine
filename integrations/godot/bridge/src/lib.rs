@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 //! OFE version 1 C ABI. The public C header defines the caller contract.
+mod match_v2;
+
 use ofe_combat_core::{Battle, Error};
 use std::collections::HashMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::{LazyLock, Mutex};
 
+const V2_BIT: u64 = 1 << 63;
 const OK: i32 = 0;
 const INVALID_ARGUMENT: i32 = 1;
 const INVALID_HANDLE: i32 = 2;
@@ -63,7 +66,11 @@ pub unsafe extern "C" fn ofe_v1_create(out: *mut u64) -> i32 {
         return INVALID_ARGUMENT;
     }
     with_registry(|registry| {
-        let token = registry.last_token.checked_add(1).ok_or(LIMIT)?;
+        let token = registry
+            .last_token
+            .checked_add(1)
+            .filter(|v| *v < V2_BIT)
+            .ok_or(LIMIT)?;
         registry.battles.try_reserve(1).map_err(|_| LIMIT)?;
         registry.battles.insert(token, Battle::new());
         registry.last_token = token;
