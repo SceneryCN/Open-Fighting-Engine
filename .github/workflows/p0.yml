@@ -6,8 +6,8 @@ jobs:
   quality:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: |
@@ -39,8 +39,8 @@ jobs:
           - {os: macos-15-intel, id: macos-x64, preset: macOS x64, output: OFE.app, binary: OFE.app}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Test duels, teams and free-for-all, then package simulator
@@ -55,7 +55,7 @@ jobs:
           "target/release/$sim" --mode 2v2 --script tools/ofe-sim/fixtures/arena.frames
           "target/release/$sim" --mode ffa --script tools/ofe-sim/fixtures/arena.frames
           python scripts/release/package_sim.py build/ofe-sim.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ofe-sim-${{ matrix.id }}
           path: build/ofe-sim.tar.gz
@@ -75,7 +75,7 @@ jobs:
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
           python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported
           tar -C build/export -czf build/ofe-p0.tar.gz .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ofe-p0-${{ matrix.id }}
           path: build/ofe-p0.tar.gz
