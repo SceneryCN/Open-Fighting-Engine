@@ -1,5 +1,5 @@
 # OFE 项目状态 · 2026-11-26
-当前阶段为 P0 Foundation & Technical Proof。Tech Lead 负责集成，QA 独立复核；阶段状态 TESTING。阶段批准权属于项目负责人。
+当前阶段为 P0 Foundation & Technical Proof。Tech Lead 负责集成，QA 独立复核；阶段状态 BLOCKED（仅余托管 CI 实跑证据）。阶段批准权属于项目负责人。
 
 |工作包|负责人|状态|已交付 / 余项|
 |---|---|---|---|

@@ -14,9 +14,12 @@ P0 导出物用于验证技术样例。构建与运行应分别记录宿主操�
 |Linux x64|Linux x64|OFE.x86_64|
 |Windows x64|Windows x64|OFE.exe|
 
+官方 macOS 模板包含 universal 二进制。prepare_macos.py 从已安装模板提取指定架构并准备预设引用的 zip；Intel 目标使用 --arch x86_64。
+
 例如，在 macOS ARM64 上从仓库根目录运行。变量 GODOT 指向本机 4.7.2 编辑器。
 
 ```sh
+python3 scripts/release/prepare_macos.py --arch arm64
 mkdir -p build/export-arm
 "$GODOT" --headless --path integrations/godot/runtime --export-release "macOS ARM64" "$PWD/build/export-arm/OFE.app"
 ```
