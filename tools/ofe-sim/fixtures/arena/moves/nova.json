@@ -1,0 +1,16 @@
+{
+  "id": "nova",
+  "startup": 0,
+  "active": 1,
+  "recovery": 2,
+  "damage": 18,
+  "hitstun": 4,
+  "blockstun": 2,
+  "hitstop": 1,
+  "pushback": 0,
+  "cancel_windows": [],
+  "invulnerability": 2,
+  "armor": 0,
+  "energy_cost": 20,
+  "lane_rule": "BOTH_LANES"
+}

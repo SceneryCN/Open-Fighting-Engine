@@ -1,0 +1,59 @@
+{
+  "manifest": "arena/manifest.json",
+  "profile": "arena/move_profile.json",
+  "fighters": [
+    {
+      "id": 1,
+      "team": 1,
+      "ffa_team": 1,
+      "spawn": {
+        "x": -4,
+        "z": 0,
+        "h": 0
+      }
+    },
+    {
+      "id": 2,
+      "team": 1,
+      "ffa_team": 2,
+      "spawn": {
+        "x": -2,
+        "z": 0,
+        "h": 0
+      }
+    },
+    {
+      "id": 3,
+      "team": 2,
+      "ffa_team": 3,
+      "spawn": {
+        "x": 0,
+        "z": 0,
+        "h": 0
+      }
+    },
+    {
+      "id": 4,
+      "team": 2,
+      "ffa_team": 4,
+      "spawn": {
+        "x": 2,
+        "z": 0,
+        "h": 0
+      }
+    }
+  ],
+  "walk_speed": 1,
+  "jump_speed": 4,
+  "gravity": 1,
+  "dash_speed": 3,
+  "dash_ticks": 2,
+  "initial_energy": 40,
+  "lane": {
+    "startup": 3,
+    "travel": 6,
+    "recovery": 3,
+    "cooldown": 20,
+    "interruptible": true
+  }
+}

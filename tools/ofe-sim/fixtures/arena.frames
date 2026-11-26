@@ -1,0 +1,26 @@
+# Slot 1 starts the multi-hit move. Slot 4 is too far for its first strike.
+1 - - -
+- - - -
+# Request the super during the cancel window, after impact pause.
+4 - - -
+- - - -
+- - - -
+- - - -
+- - - -
+- - - -
+# Projectile remains live beyond its cast. Fourth slot guards.
+3 - - G
+- - - G
+- - - G
+- - - G
+- - - G
+- - - G
+- - - G
+- - - G
+# Dash and defend, then probe armored/invulnerable startup and a throw.
+D - - G
+- - - G
+5 6 - 2
+- - - -
+- - - -
+- - - -

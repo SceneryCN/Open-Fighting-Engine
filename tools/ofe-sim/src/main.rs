@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-//! Local two-player frame console.
+//! Local duel and four-player frame consoles.
+mod arena_console;
 use ofe_combat_core::duel::{Controls, Duel};
 use std::{
     env,
@@ -70,6 +71,10 @@ fn run(input: impl BufRead) -> Result<(), String> {
     Ok(())
 }
 
+fn open_script(path: &std::ffi::OsStr) -> Result<File, String> {
+    File::open(path).map_err(|e| format!("{}: {e}", std::path::Path::new(path).display()))
+}
+
 fn entry() -> Result<(), String> {
     let args: Vec<_> = env::args_os().skip(1).collect();
     match args.as_slice() {
@@ -80,15 +85,34 @@ fn entry() -> Result<(), String> {
             run(io::stdin().lock())
         }
         [help] if help == "--help" || help == "-h" => {
-            println!("{USAGE}");
+            println!("{USAGE}\n{}", arena_console::USAGE);
             Ok(())
         }
         [flag, path] if flag == "--script" => {
-            let file = File::open(path)
-                .map_err(|e| format!("{}: {e}", std::path::Path::new(path).display()))?;
+            let file = open_script(path)?;
             run(BufReader::new(file))
         }
-        _ => Err(USAGE.into()),
+        [flag, mode, rest @ ..] if flag == "--mode" => {
+            let mode = match mode.to_str() {
+                Some("2v2") => ofe_sim::ArenaMode::Teams,
+                Some("ffa") => ofe_sim::ArenaMode::FreeForAll,
+                _ => return Err(arena_console::USAGE.into()),
+            };
+            match rest {
+                [] => {
+                    if io::stdin().is_terminal() {
+                        println!("{}", arena_console::USAGE);
+                    }
+                    arena_console::run(io::stdin().lock(), mode)
+                }
+                [flag, path] if flag == "--script" => {
+                    let file = open_script(path)?;
+                    arena_console::run(BufReader::new(file), mode)
+                }
+                _ => Err(arena_console::USAGE.into()),
+            }
+        }
+        _ => Err(format!("{USAGE}\n{}", arena_console::USAGE)),
     }
 }
 

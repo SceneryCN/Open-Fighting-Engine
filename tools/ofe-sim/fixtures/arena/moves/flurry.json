@@ -1,0 +1,21 @@
+{
+  "id": "flurry",
+  "startup": 0,
+  "active": 3,
+  "recovery": 2,
+  "damage": 7,
+  "hitstun": 4,
+  "blockstun": 2,
+  "hitstop": 1,
+  "pushback": 0,
+  "cancel_windows": [
+    {
+      "start": 1,
+      "end": 3
+    }
+  ],
+  "invulnerability": 0,
+  "armor": 0,
+  "energy_cost": 0,
+  "lane_rule": "SAME_LANE"
+}
