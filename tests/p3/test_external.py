@@ -111,6 +111,30 @@ class ExternalPackage(unittest.TestCase):
         self.assertIn("damage: 7", changed_order)
         self.assertIn("hp=193", changed_order)
 
+    def test_presentation_changes_leave_the_fight_trace_identical(self):
+        original = self.invoke(SIM, "--character", self.source, "--script", self.script).stdout
+        path = self.source / "clips/wait.json"
+        clip = read(path)
+        clip["loop"] = False
+        clip["frames"][0].update(duration=12, events=["sound", "end"], index=1)
+        write(path, clip)
+        self.assertEqual(original, self.invoke(SIM, "--character", self.source, "--script", self.script).stdout)
+
+    def test_archived_run_failure_propagates_and_cleans_tempdir(self):
+        self.pack()
+        self.script.write_text("bad_key -\n", encoding="utf-8")
+        direct = self.invoke(SIM, "--character", self.source, "--script", self.script, status=1)
+        scratch = self.temp / "extracts"
+        scratch.mkdir()
+        env = dict(os.environ, TMPDIR=str(scratch), TMP=str(scratch), TEMP=str(scratch))
+        archived = subprocess.run([sys.executable, str(CLI), "run", str(self.package),
+            "--simulator", str(SIM), "--script", str(self.script)], capture_output=True, text=True,
+            cwd=self.temp, timeout=30, env=env)
+        self.assertEqual(archived.returncode, direct.returncode)
+        self.assertEqual(archived.stderr, direct.stderr)
+        self.assertEqual(archived.stdout, direct.stdout)
+        self.assertEqual(list(scratch.iterdir()), [])
+
     def test_stored_archive_and_failed_replacement(self):
         self.pack()
         stored = self.temp / "stored.ofc"
