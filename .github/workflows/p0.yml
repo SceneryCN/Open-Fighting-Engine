@@ -12,7 +12,7 @@ jobs:
           python-version: '3.12'
       - run: |
           python -m pip install clang-format==23.1.5
-          clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c
+          clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c tests/integration/*.cpp
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/formats -v
       - run: |
@@ -30,9 +30,9 @@ jobs:
       matrix:
         include:
           - {os: ubuntu-24.04, id: linux-x64, preset: Linux x64, output: OFE, binary: OFE}
-          - {os: windows-2022, id: windows-x64, preset: Windows x64, output: OFE.exe, binary: OFE.exe}
-          - {os: macos-15, id: macos-arm64, preset: macOS ARM64, output: OFE.app, binary: OFE.app/Contents/MacOS/OFE}
-          - {os: macos-15-intel, id: macos-x64, preset: macOS x64, output: OFE.app, binary: OFE.app/Contents/MacOS/OFE}
+          - {os: windows-2022, id: windows-x64, preset: Windows x64, output: OFE.exe, binary: OFE.console.exe}
+          - {os: macos-15, id: macos-arm64, preset: macOS ARM64, output: OFE.app, binary: OFE.app}
+          - {os: macos-15-intel, id: macos-x64, preset: macOS x64, output: OFE.app, binary: OFE.app}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -48,12 +48,14 @@ jobs:
       - name: Test editor and release export
         shell: bash
         run: |
-          exe="$(python scripts/build/ci-godot.py build/downloads)"
+          exe="$(python scripts/build/ci-godot.py build/downloads | tr -d '\r')"
           python scripts/test/headless.py "$exe"
+          if [[ "$RUNNER_OS" == macOS ]]; then python scripts/release/prepare_macos.py; fi
           mkdir -p build/export
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
           python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported
+          tar -C build/export -czf build/ofe-p0.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: ofe-p0-${{ matrix.id }}
-          path: build/export/
+          path: build/ofe-p0.tar.gz

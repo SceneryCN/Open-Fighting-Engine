@@ -1,6 +1,7 @@
 """Import and run the P0 scene (or test its exported executable) with a timeout."""
 import argparse
 from pathlib import Path
+import plistlib
 import subprocess
 import sys
 
@@ -21,6 +22,12 @@ if __name__ == "__main__":
     parser.add_argument("godot", help="Godot 4.7.2 executable")
     parser.add_argument("--exported", action="store_true", help="test an exported executable")
     args = parser.parse_args()
+    executable = Path(args.godot)
+    if args.exported and executable.suffix == ".app":
+        contents = executable / "Contents"
+        with (contents / "Info.plist").open("rb") as plist:
+            executable = contents / "MacOS" / plistlib.load(plist)["CFBundleExecutable"]
+        args.godot = str(executable.resolve())
     base = [args.godot, "--headless"]
     if not args.exported:
         version = subprocess.check_output([args.godot, "--version"], text=True).strip()
