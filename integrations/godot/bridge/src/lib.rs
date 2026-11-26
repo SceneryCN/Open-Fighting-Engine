@@ -78,6 +78,10 @@ pub unsafe extern "C" fn ofe_v1_create(out: *mut u64) -> i32 {
 pub extern "C" fn ofe_v1_destroy(handle: u64) -> i32 {
     with_registry(|registry| {
         registry.battles.remove(&handle).ok_or(INVALID_HANDLE)?;
+        // Rust does not drop statics on library unload. Free the table when idle.
+        if registry.battles.is_empty() {
+            registry.battles.shrink_to_fit();
+        }
         Ok(())
     })
 }
@@ -146,4 +150,59 @@ pub unsafe extern "C" fn ofe_v1_read(handle: u64, out: *mut StateV1) -> i32 {
         unsafe { out.write(output) };
         Ok(())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread;
+
+    #[test]
+    fn concurrent_battles_have_independent_state_and_lifetimes() {
+        let workers: Vec<_> = (-1..=1)
+            .map(|axis| {
+                thread::spawn(move || {
+                    let mut token = 0;
+                    let mut state = StateV1 {
+                        size: 32,
+                        version: 1,
+                        frame: 0,
+                        entity_id: 0,
+                        x: 0,
+                        z: 0,
+                        h: 0,
+                    };
+                    // SAFETY: both outputs are exclusively owned, aligned locals.
+                    assert_eq!(unsafe { ofe_v1_create(&mut token) }, OK);
+                    for frame in 1..=100 {
+                        assert_eq!(ofe_v1_submit(token, frame, axis), OK);
+                        assert_eq!(ofe_v1_step(token), OK);
+                    }
+                    assert_eq!(unsafe { ofe_v1_read(token, &mut state) }, OK);
+                    assert_eq!((state.frame, state.x), (100, 100 * axis));
+                    assert_eq!(ofe_v1_destroy(token), OK);
+                    assert_eq!(ofe_v1_step(token), INVALID_HANDLE);
+                    token
+                })
+            })
+            .collect();
+        let mut tokens: Vec<_> = workers
+            .into_iter()
+            .map(|worker| worker.join().unwrap())
+            .collect();
+        tokens.sort_unstable();
+        tokens.dedup();
+        assert_eq!(tokens.len(), 3);
+    }
+
+    #[test]
+    fn short_read_only_needs_initialized_size_prefix() {
+        #[repr(align(8))]
+        struct Prefix(u32);
+        let mut prefix = Prefix(4);
+        // SAFETY: the aligned prefix reports its true writable length.
+        let status = unsafe { ofe_v1_read(0, (&raw mut prefix.0).cast()) };
+        assert_eq!(status, INCOMPATIBLE);
+        assert_eq!(prefix.0, 4);
+    }
 }
