@@ -1,0 +1,1 @@
+OFE P4 technical scene example. Data and character art offered under CC0-1.0 to the extent of any rights held by OFE contributors. Original sprite atlas generated for OFE with OpenAI ImageGen. No third-party character assets used.

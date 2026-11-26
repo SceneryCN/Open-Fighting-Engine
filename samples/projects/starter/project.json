@@ -1,0 +1,25 @@
+{
+  "format": "OGP",
+  "format_version": "1.0",
+  "id": "starter",
+  "title": "Amber Dojo",
+  "characters": [
+    "characters/amber/manifest.json"
+  ],
+  "stages": [
+    "stage.json"
+  ],
+  "layout": "layout.json",
+  "audio": [],
+  "fonts": [],
+  "theme": "theme.json",
+  "modes": [
+    "1v1",
+    "training"
+  ],
+  "settings": {
+    "simulation_hz": 60,
+    "depth_projection": 0.054
+  },
+  "dependencies": []
+}

@@ -1,4 +1,4 @@
-"""Portable .ofc ZIP transport for a validated OFC resource graph."""
+"""Portable ZIP transport for validated OFC and OGP resource graphs."""
 from contextlib import contextmanager
 from pathlib import Path, PureWindowsPath
 import os
@@ -43,23 +43,23 @@ def copy_limited(source, target, remaining):
     while chunk := source.read(64 * 1024):
         written += len(chunk)
         if written > min(MAX_FILE, remaining):
-            raise ValueError("character archive exceeds size limit")
+            raise ValueError("archive exceeds size limit")
         target.write(chunk)
     return written
 
 
 @contextmanager
-def open_source(path):
+def open_source(path, suffix=".ofc"):
     if path.is_dir():
         yield path.resolve()
         return
-    if path.suffix.lower() != ".ofc":
-        raise ValueError("expected a character directory or .ofc archive")
+    if path.suffix.lower() != suffix:
+        raise ValueError(f"expected a directory or {suffix} archive")
     with tempfile.TemporaryDirectory() as tmp, zipfile.ZipFile(path) as archive:
         root = Path(tmp).resolve()
         members = archive.infolist()
         if len(members) > MAX_FILES:
-            raise ValueError("too many character archive members")
+            raise ValueError("too many archive members")
         total = 0
         names = Names()
         for item in members:
@@ -83,11 +83,11 @@ def open_source(path):
         yield root
 
 
-def write_package(files, output):
-    if output.suffix.lower() != ".ofc" or output.resolve() in files.values():
-        raise ValueError("output must be a separate .ofc file")
+def write_package(files, output, suffix=".ofc"):
+    if output.suffix.lower() != suffix or output.resolve() in files.values():
+        raise ValueError(f"output must be a separate {suffix} file")
     if len(files) > MAX_FILES:
-        raise ValueError("too many character resources")
+        raise ValueError("too many package resources")
     names = Names()
     with tempfile.NamedTemporaryFile(dir=output.parent, delete=False) as handle:
         temporary = Path(handle.name)

@@ -1,0 +1,22 @@
+{
+  "id": "updraft",
+  "startup": 1,
+  "active": 4,
+  "recovery": 10,
+  "damage": 23,
+  "hitstun": 9,
+  "blockstun": 3,
+  "hitstop": 1,
+  "pushback": 1,
+  "cancel_windows": [
+    {
+      "start": 2,
+      "end": 14
+    }
+  ],
+  "invulnerability": 2,
+  "armor": 0,
+  "energy_cost": 0,
+  "lane_rule": "SAME_LANE",
+  "launch_speed": 2
+}

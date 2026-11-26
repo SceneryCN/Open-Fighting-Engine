@@ -4,6 +4,9 @@
 import argparse
 import json
 import math
+import shutil
+import tempfile
+from contextlib import ExitStack, contextmanager
 import sys
 import struct
 import subprocess
@@ -136,13 +139,17 @@ def relations(kind, data):
                 ids.add(element["id"])
 
 
-def validate(path, expected=None, checked=None, files=None, label=None):
+def record_resource(files, label, path):
+    if files is not None and files.setdefault(label, path) != path:
+        raise Invalid(f"conflicting package resource {label!r}")
+
+
+def validate(path, expected=None, checked=None, files=None, label=None, on_character=None):
     """Validate a document and all typed references; raise Invalid on failure."""
     if checked is None:
         checked = set()
     path = path.resolve()
-    if files is not None:
-        files[label] = path
+    record_resource(files, label, path)
     key = (path, expected, label)
     if key in checked:
         return
@@ -161,8 +168,7 @@ def validate(path, expected=None, checked=None, files=None, label=None):
         try:
             target = resource_path(path.parent, ref)
             child = str(Path(label).parent.joinpath(ref).as_posix()) if label else None
-            if files is not None:
-                files[child] = target
+            record_resource(files, child, target)
             if target_kind == "png":
                 with target.open("rb") as stream:
                     header = stream.read(33)
@@ -180,19 +186,22 @@ def validate(path, expected=None, checked=None, files=None, label=None):
                     source = data["source"]
                     if width % source["columns"] or height % source["rows"]:
                         raise Invalid("PNG dimensions must be divisible by sheet columns and rows")
+            elif target_kind == "OFC" and on_character is not None:
+                on_character(target, child)
             elif target_kind != "file":
                 validate(target, target_kind, checked, files, child)
         except (Invalid, OSError) as exc:
             raise Invalid(f"{path}{pointer(parts)} -> {exc}") from exc
     checked.add(key)
+    return data
 
 
-def character(root):
+def character(root, manifest_name="manifest.json"):
     files = {}
-    manifest_path = resource_path(root, "manifest.json")
-    validate(manifest_path, "OFC", files=files, label="manifest.json")
-    manifest = read_document(manifest_path)
+    manifest_path = resource_path(root, manifest_name)
+    manifest = validate(manifest_path, "OFC", files=files, label=manifest_name)
     info = {k: manifest[k] for k in ("id", "author", "license", "dependencies")}
+    info["name"] = read_document(files[manifest["character"]])["name"]
     groups = {}
     for key in ("moves", "animations", "hitboxes"):
         entries = [read_document(files[name]) for name in manifest[key]]
@@ -220,6 +229,85 @@ def character(root):
     return files, info
 
 
+def project_input(source):
+    if source.is_dir():
+        return (source / "project.json").exists()
+    if source.suffix.lower() in (".ofc", ".ogp"):
+        return source.suffix.lower() == ".ogp"
+    data = read_document(source)
+    return isinstance(data, dict) and data.get("format") == "OGP"
+
+
+@contextmanager
+def open_project(source):
+    if source.is_file() and source.suffix.lower() != ".ogp":
+        yield source.resolve()
+    else:
+        with open_source(source, ".ogp") as root:
+            yield resource_path(root, "project.json")
+
+
+def project(entry):
+    files = {}
+    fighters = []
+    ids = set()
+
+    def add_character(manifest, label):
+        assets, info = character(manifest.parent, manifest.name)
+        if info["id"] in ids:
+            raise Invalid(f"duplicate character id {info['id']!r}")
+        ids.add(info["id"])
+        fighters.append((manifest, assets, info))
+        for name, path in assets.items():
+            if name == manifest.name:
+                continue  # Already recorded by the OGP resource walker.
+            key = (Path(label).parent / name).as_posix()
+            record_resource(files, key, path)
+
+    data = validate(entry, "OGP", files=files, label="project.json", on_character=add_character)
+    return files, data, fighters
+
+
+def launch(entry, mods, runtime):
+    _, data, fighters = project(entry)
+    with ExitStack() as stack:
+        scratch = Path(stack.enter_context(tempfile.TemporaryDirectory())).resolve()
+        for source in mods:
+            root = stack.enter_context(open_source(source))
+            files, info = character(root)
+            fighters.append((root / "manifest.json", files, info))
+
+        roster = []
+        ids = set()
+        for owner in [data, *(info for _, _, info in fighters)]:
+            if owner["dependencies"]:
+                unresolved = ", ".join(f"{d['id']} {d['version']}" for d in owner["dependencies"])
+                raise Invalid(f"{owner['id']}: unresolved dependency: {unresolved}")
+        for manifest, files, info in fighters:
+            identifier = info["id"]
+            if identifier in ids:
+                raise Invalid(f"duplicate character id {identifier!r}")
+            ids.add(identifier)
+            directory = manifest.parent
+            if manifest.name != "manifest.json":
+                # Rust accepts character roots with a canonical manifest name.
+                directory = scratch / f"character-{len(roster)}"
+                for name, source in files.items():
+                    target = directory / ("manifest.json" if name == manifest.name else name)
+                    if target.exists():
+                        raise Invalid("character resource conflicts with manifest.json")
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(source, target)
+            roster.append({"id": identifier, "name": info["name"], "dir": str(directory)})
+
+        catalog = scratch / "catalog.json"
+        catalog.write_text(json.dumps({
+            "format": "OFE_LAUNCH", "version": 1, "title": data["title"], "modes": data["modes"],
+            "depth_projection": float(data["settings"]["depth_projection"]), "characters": roster,
+        }, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+        return subprocess.run([runtime.resolve(), "--", f"--ofe-project={catalog}"]).returncode
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -231,6 +319,10 @@ def main():
         if command == "run":
             cmd.add_argument("--simulator", type=Path, required=True)
             cmd.add_argument("--script", type=Path)
+    launcher = sub.add_parser("launch", help="play an OGP project with optional external characters")
+    launcher.add_argument("source", type=Path)
+    launcher.add_argument("--runtime", type=Path, required=True)
+    launcher.add_argument("--mod", type=Path, action="append", default=[])
     replay = sub.add_parser("replay", help="verify an OFE_REPLAY simulation or game recording")
     replay.add_argument("source", type=Path)
     replay.add_argument("--simulator", type=Path, required=True)
@@ -238,7 +330,22 @@ def main():
     try:
         if args.command == "replay":
             return subprocess.run([args.simulator.resolve(), "replay", args.source]).returncode
-        if args.command == "validate" and args.source.is_file() and args.source.suffix.lower() != ".ofc":
+        if args.command == "launch":
+            with open_project(args.source) as entry:
+                return launch(entry, args.mod, args.runtime)
+        if args.command != "run" and project_input(args.source):
+            if args.command == "package" and args.source.is_file() and args.source.suffix.lower() == ".ogp":
+                raise Invalid("package expects a project directory or JSON entry")
+            with open_project(args.source) as entry:
+                files, data, fighters = project(entry)
+                if args.command == "inspect":
+                    info = dict(data)
+                    info["characters"] = [fighter for _, _, fighter in fighters]
+                    print(json.dumps(info, ensure_ascii=False, default=float))
+                    return 0
+                if args.command == "package":
+                    write_package(files, args.output, ".ogp")
+        elif args.command == "validate" and args.source.is_file() and args.source.suffix.lower() != ".ofc":
             validate(args.source)
         else:
             if args.command == "package" and not args.source.is_dir():
@@ -255,7 +362,7 @@ def main():
                     if args.script:
                         command += ["--script", args.script]
                     return subprocess.run(command).returncode
-    except (ValueError, OSError, RuntimeError, zipfile.BadZipFile, EOFError, zlib.error) as exc:
+    except (ValueError, OverflowError, OSError, RuntimeError, zipfile.BadZipFile, EOFError, zlib.error) as exc:
         print(exc, file=sys.stderr)
         return 1
     print(f"OK {args.source}")

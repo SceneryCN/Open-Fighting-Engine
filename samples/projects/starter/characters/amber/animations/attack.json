@@ -1,0 +1,41 @@
+{
+  "format": "OFA",
+  "format_version": "1.0",
+  "id": "attack",
+  "loop": false,
+  "source": {
+    "kind": "sheet",
+    "image": "assets/fighter.png",
+    "columns": 2,
+    "rows": 1
+  },
+  "frames": [
+    {
+      "index": 0,
+      "duration": 1,
+      "origin": {
+        "x": 116,
+        "y": 247
+      },
+      "events": []
+    },
+    {
+      "index": 1,
+      "duration": 3,
+      "origin": {
+        "x": 116,
+        "y": 247
+      },
+      "events": []
+    },
+    {
+      "index": 0,
+      "duration": 2,
+      "origin": {
+        "x": 116,
+        "y": 247
+      },
+      "events": []
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "format": "OFL",
+  "format_version": "1.0",
+  "id": "dojo_layout",
+  "screens": {
+    "main_menu": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Amber Dojo"
+      }
+    ],
+    "character_select": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Choose a fighter"
+      }
+    ],
+    "versus": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Versus"
+      }
+    ],
+    "battle_hud": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Round"
+      }
+    ],
+    "pause": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Paused"
+      }
+    ],
+    "result": [
+      {
+        "id": "title",
+        "type": "label",
+        "x": 24,
+        "y": 24,
+        "text": "Match result"
+      }
+    ]
+  }
+}

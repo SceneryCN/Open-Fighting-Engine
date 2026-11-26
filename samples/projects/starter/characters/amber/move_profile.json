@@ -1,0 +1,28 @@
+{
+  "format": "OFE_MOVE_PROFILE",
+  "format_version": "1.0",
+  "moves": [
+    {
+      "id": "tap",
+      "kind": "strike",
+      "windows": [],
+      "cancel_into": [
+        "updraft"
+      ]
+    },
+    {
+      "id": "updraft",
+      "kind": "strike",
+      "windows": [],
+      "cancel_into": [
+        "sunbreak"
+      ]
+    },
+    {
+      "id": "sunbreak",
+      "kind": "super",
+      "windows": [],
+      "cancel_into": []
+    }
+  ]
+}

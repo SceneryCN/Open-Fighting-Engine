@@ -1,0 +1,16 @@
+{
+  "id": "sunbreak",
+  "startup": 3,
+  "active": 5,
+  "recovery": 15,
+  "damage": 44,
+  "hitstun": 12,
+  "blockstun": 3,
+  "hitstop": 1,
+  "pushback": 1,
+  "cancel_windows": [],
+  "invulnerability": 0,
+  "armor": 0,
+  "energy_cost": 24,
+  "lane_rule": "SAME_LANE"
+}
