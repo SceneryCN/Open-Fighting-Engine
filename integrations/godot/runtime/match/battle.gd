@@ -130,7 +130,7 @@ func _present() -> bool:
 	var a: float = current.fighters[0].x
 	var b: float = current.fighters[1].x
 	_camera_x = (a + b) * 0.5
-	_unit = minf(35.0, 756.0 / maxf(1.0, absf(b - a)))
+	_unit = minf(25.0, 756.0 / maxf(1.0, absf(b - a)))
 	for i in range(2):
 		var f: Dictionary = current.fighters[i]
 		var anim: Dictionary = f.animation

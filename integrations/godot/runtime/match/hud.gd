@@ -40,7 +40,6 @@ func _ready() -> void:
 		names.append(_label(x, 7, 362, 29, 21, align, paper))
 		var bar := ProgressBar.new()
 		bar.position = Vector2(x, 41)
-		bar.size = Vector2(362, 9)
 		bar.show_percentage = false
 		bar.fill_mode = ProgressBar.FILL_BEGIN_TO_END if i == 0 else ProgressBar.FILL_END_TO_BEGIN
 		for style in ["background", "fill"]:
@@ -48,6 +47,7 @@ func _ready() -> void:
 			box.bg_color = Color("#435158") if style == "background" else accent
 			bar.add_theme_stylebox_override(style, box)
 		add_child(bar)
+		bar.size = Vector2(362, 9)
 		bars.append(bar)
 		values.append(_label(x, 53, 362, 24, 14, align, accent))
 		energy.append(_label(x, 53, 362, 24, 13, HORIZONTAL_ALIGNMENT_RIGHT if i == 0 else HORIZONTAL_ALIGNMENT_LEFT, paper))
@@ -65,6 +65,6 @@ func present(snap: Dictionary) -> void:
 		bars[i].max_value = f.max_hp
 		bars[i].value = f.hp
 		values[i].text = "%d / %d  HP" % [f.hp, f.max_hp]
-		energy[i].text = "EN  %d" % f.energy
+		energy[i].text = "%s   ·   EN  %d" % [str(f.state).to_upper(), f.energy]
 	var seconds := floori(float(snap.frame) / 60.0)
 	clock_label.text = "%02d:%02d" % [floori(seconds / 60.0), seconds % 60]
