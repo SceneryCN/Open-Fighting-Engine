@@ -15,8 +15,8 @@ jobs:
           clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c tests/integration/*.cpp
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/formats -v
-          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/flux/manifest.json
-          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/flux/move_profile.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/manifest.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/move_profile.json
           python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/amber/manifest.json
           python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/indigo/manifest.json
       - run: |
