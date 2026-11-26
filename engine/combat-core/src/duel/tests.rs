@@ -225,6 +225,6 @@ fn knockout_ends_both_kinds_of_switch_on_a_lane() {
             idle,
         );
         assert_eq!(duel.fighters()[1].state, State::Ko);
-        assert_eq!(duel.fighters()[1].position.z, FAR);
+        assert_eq!(duel.fighters()[1].position.z, 1000);
     }
 }

@@ -37,6 +37,7 @@ def package(output):
         for source, name in [
             (ROOT / "target/release" / executable, executable),
             (ROOT / "tools/ofe-sim/fixtures/duel.frames", "duel.frames"),
+            (ROOT / "tools/ofe-sim/fixtures/arena.frames", "arena.frames"),
             (ROOT / "LICENSE", "LICENSE"),
             (ROOT / "LICENSES", "LICENSES"),
             (ROOT / "tools/ofe-sim/fixtures/amber/licenses/notice.txt", "LICENSES/samples.txt"),
@@ -50,8 +51,9 @@ def package(output):
                 raise ValueError(f"No packaged license found for {crate['name']}")
             for notice in notices:
                 archive.add(notice, arcname=f"LICENSES/{crate['name']}-{crate['version']}/{notice.name}")
-        readme = (f"OFE P1 combat simulator\nSource: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
+        readme = (f"OFE combat simulator\nSource: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
                   f"Run ./{executable} --script duel.frames to replay the example, or ./{executable} for interactive controls.\n"
+                  f"Run ./{executable} --mode 2v2 --script arena.frames or use --mode ffa for four independent teams.\n"
                   "Built with Rust 1.100.0. Standard library notices: https://doc.rust-lang.org/1.100.0/copyright.html\n").encode()
         info = tarfile.TarInfo("README.txt")
         info.size = len(readme)
