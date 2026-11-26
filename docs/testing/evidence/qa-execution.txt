@@ -1,0 +1,120 @@
+OFE P0 QA / 2026-11-26 / Independent execution, selected original lines.
+Independently invoked real executables. CMake cold clone did not override dependency source.
+Godot official build ed1daf0bf. Rust 1.100.0. No Actions run ID.
+
+# Independent clean clone from feature/build, pre-registration fix
++zsh:5> git rev-parse HEAD
+ff1e9abccabf8825572e8982d776745f919f737f
++zsh:5> git status --porcelain
++zsh:5> cmake -S . -B build -G Ninja '-DCMAKE_BUILD_TYPE=Release'
+--   eg. cmake --build . -j 7  ...
++zsh:5> cmake --build build --parallel 6
++zsh:5> ctest --test-dir build --output-on-failure
+1/1 Test #1: abi_smoke ........................   Passed    0.32 sec
++zsh:5> cmake --install build --prefix /tmp/ofe-qa-cold/integrations/godot/runtime
+-- Installing: /tmp/ofe-qa-cold/integrations/godot/runtime/bin/libofe_godot.dylib
+res://ofe.gdextension
++ /Applications/Godot.app/Contents/MacOS/Godot --headless --path /private/tmp/ofe-qa-cold/integrations/godot/runtime --editor --import
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
++ /Applications/Godot.app/Contents/MacOS/Godot --headless --path /private/tmp/ofe-qa-cold/integrations/godot/runtime -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# Independent code quality and Rust suite
++zsh:2> git rev-parse HEAD
+f6e4811e7693580830b6aa36ba992d7588a95727
++zsh:2> clang-format --dry-run --Werror integrations/godot/extension/ofe_extension.cpp integrations/godot/bridge/include/ofe_v1.h tests/integration/abi_smoke.c tests/integration/concurrent_abi.cpp
++zsh:2> cargo fmt --all -- --check
++zsh:2> cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
++zsh:2> cargo test --locked --workspace
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++zsh:2> cargo nextest run --locked --workspace
+    Starting 7 tests across 4 binaries
+     Summary [   0.014s] 7 tests run: 7 passed, 0 skipped
++zsh:2> cargo tree -p ofe-combat-core -e normal
+ofe-combat-core v0.1.0 (/private/tmp/ofe-p0-qa/engine/combat-core)
+
+# Formats in empty Python 3.12 venv
++zsh:1> uv venv --python 3.12 .venv
+Using CPython 3.12.14
++zsh:1> uv pip install --require-hashes --python .venv/bin/python -r tools/ofe-validator/requirements.txt
++zsh:1> .venv/bin/python -m unittest discover -s tests/formats -v
+test_invalid_examples (test_formats.Validation.test_invalid_examples) ... ok
+test_move_depth_and_windows (test_formats.Validation.test_move_depth_and_windows) ... ok
+test_nested_missing_resource (test_formats.Validation.test_nested_missing_resource) ... ok
+test_path_rules (test_formats.Validation.test_path_rules) ... ok
+test_png_source_type (test_formats.Validation.test_png_source_type) ... ok
+test_referenced_wrong_format (test_formats.Validation.test_referenced_wrong_format) ... ok
+test_screen_element_ids (test_formats.Validation.test_screen_element_ids) ... ok
+test_sheet_index (test_formats.Validation.test_sheet_index) ... ok
+test_strict_json_and_shape (test_formats.Validation.test_strict_json_and_shape) ... ok
+test_symlink_escape (test_formats.Validation.test_symlink_escape) ... ok
+test_unsupported_version (test_formats.Validation.test_unsupported_version) ... ok
+test_valid_graph_and_sheet (test_formats.Validation.test_valid_graph_and_sheet) ... ok
+Ran 12 tests in 0.290s
+OK
++zsh:1> .venv/bin/python tools/ofe-validator/ofe.py validate tests/fixtures/formats/valid/project.json
+OK tests/fixtures/formats/valid/project.json
+
+# Initial cold editor import without preregistration (failed)
++zsh:4> /Applications/Godot.app/Contents/MacOS/Godot --headless --path integrations/godot/runtime --editor --import
+handle_crash: Program crashed with signal 11
+Engine version: Godot Engine v4.7.2.stable.official (ed1daf0bf001b61586d9930840f2f1394092c079)
+
+# ABI release lifecycle scan at exit
++zsh:4> leaks --atExit -- build/v10/abi_smoke
+OFE_ABI_PASS
+Process 10241 is not debuggable. Due to security restrictions, leaks can only show or save contents of readonly memory of restricted processes.
+Process 10241: 0 leaks for 0 total leaked bytes.
+
+# QA concurrent caller
+PASS: 8 submitters, one accepted, 4096 isolated lifecycles, ABI tail preserved
+Process 7440 is not debuggable. Due to security restrictions, leaks can only show or save contents of readonly memory of restricted processes.
+Process 7440: 0 leaks for 0 total leaked bytes.
+
+# Intel editor under Rosetta
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# Linux amd64 editor
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# Wine 8 negative context
+ERROR: Can't open dynamic library: Z:/tools/qa-platforms/win10/bin/ofe_godot.dll. Missing dependencies: bcryptprimitives.dll. Error: Error 126: Module not found..
+
+# Win64 Wine 10 repeat, editor and export
++ export WINEDEBUG=-all
++ /usr/lib/wine/wine64 --version
+wine-10.0 (Debian 10.0~repack-6)
++ /usr/lib/wine/wine64 /tmp/ofe_abi.exe
+OFE_ABI_PASS
++ /usr/lib/wine/wine64 /tmp/ofe_concurrent.exe
+PASS: 8 submitters, one accepted, 4096 isolated lifecycles, ABI tail preserved
++ /usr/lib/wine/wine64 /tools/win-editor/Godot_v4.7.2-stable_win64.exe --headless --path Z:\tmp\proj -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
++ /usr/lib/wine/wine64 /delivery/windows-x64/OFE.exe --headless -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# macOS ARM64 export
+/tmp/ofe-p0-build/build/delivery/macos-arm64/OFE.app/Contents/MacOS/OFE · Bridge Proof: Mach-O 64-bit executable arm64
++zsh:1> '/tmp/ofe-p0-build/build/delivery/macos-arm64/OFE.app/Contents/MacOS/OFE · Bridge Proof' --headless -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# macOS x64 export
+/tmp/ofe-p0-build/build/delivery/macos-x64/OFE.app/Contents/MacOS/OFE · Bridge Proof: Mach-O 64-bit executable x86_64
++zsh:1> arch -x86_64 '/tmp/ofe-p0-build/build/delivery/macos-x64/OFE.app/Contents/MacOS/OFE · Bridge Proof' --headless -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
+
+# Linux x64 export: docker exec ofe-p0-linux /work/build/delivery/linux-x64/OFE --headless -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS
