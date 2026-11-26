@@ -8,12 +8,12 @@ import sys
 PROJECT = Path(__file__).resolve().parents[2] / "integrations/godot/runtime"
 
 
-def run(command, expect_marker=False):
+def run(command, marker=None):
     print("+", *command, flush=True)
     proc = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           timeout=90, text=True, errors="replace")
     print(proc.stdout, end="")
-    if proc.returncode or (expect_marker and "OFE_P0_PASS" not in proc.stdout.splitlines()):
+    if proc.returncode or (marker and marker not in proc.stdout.splitlines()):
         sys.exit(proc.returncode or 1)
 
 
@@ -35,4 +35,6 @@ if __name__ == "__main__":
             sys.exit(f"Godot 4.7.2 stable required, got {version}")
         base += ["--path", str(PROJECT)]
         run(base + ["--editor", "--import"])
-    run(base + ["--", "--p0-test"], expect_marker=True)
+        run(base + ["--script", str(Path(__file__).with_name("scene_reentry.gd").resolve())],
+            marker="OFE_REENTRY_PASS")
+    run(base + ["--", "--p0-test"], marker="OFE_P0_PASS")

@@ -91,3 +91,6 @@ func _run_smoke() -> bool:
 func _exit_tree() -> void:
 	if battle != null and battle.close() != 0:
 		push_error("OFE battle release failed")
+	battle = null
+	current.clear()
+	request_ready()
