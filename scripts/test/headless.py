@@ -1,10 +1,11 @@
-"""Import and run the P0, P4 and P5 scenes (or test its exported executable) with a timeout."""
+"""Import and run the P0, P4, P5 and P6 scenes (or test its exported executable) with a timeout."""
 import argparse
 from pathlib import Path
 import plistlib
 import shutil
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 
 PROJECT = Path(__file__).resolve().parents[2] / "integrations/godot/runtime"
 
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("godot", help="Godot 4.7.2 executable")
     parser.add_argument("--exported", action="store_true", help="test an exported executable")
+    parser.add_argument("--simulator", type=Path, help="verify the Godot recording with this ofe-sim binary")
     args = parser.parse_args()
     executable = Path(args.godot)
     if args.exported and executable.suffix == ".app":
@@ -43,3 +45,10 @@ if __name__ == "__main__":
     run(base + ["--", "--p0-test"], marker="OFE_P0_PASS")
     run(base + ["--", "--p4-test"], marker="OFE_P4_PASS")
     run(base + ["--", "--p5-test"], marker="OFE_P5_PASS")
+    with TemporaryDirectory(prefix="ofe-p6-") as scratch:
+        tape = Path(scratch).resolve() / "training.ofr"
+        record = base + ["--", "--p6-test", f"--qa-replay={tape}"]
+        run(record, marker="OFE_P6_PASS")
+        if args.simulator:
+            run([str(args.simulator.resolve()), "replay", str(tape)])
+        run(record + ["--qa-play"], marker="OFE_P6_PASS")

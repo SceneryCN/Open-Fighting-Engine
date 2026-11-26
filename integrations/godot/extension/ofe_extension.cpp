@@ -112,6 +112,14 @@ class OFEMatch : public RefCounted {
         ClassDB::bind_method(D_METHOD("step_roster", "frame", "masks"), &OFEMatch::step_roster);
         ClassDB::bind_method(D_METHOD("set_infinite_health", "enabled"),
                              &OFEMatch::set_infinite_health);
+        ClassDB::bind_method(D_METHOD("training_reset"), &OFEMatch::training_reset);
+        ClassDB::bind_method(D_METHOD("record_begin"), &OFEMatch::record_begin);
+        ClassDB::bind_method(D_METHOD("record_end"), &OFEMatch::record_end);
+        ClassDB::bind_method(D_METHOD("play_begin"), &OFEMatch::play_begin);
+        ClassDB::bind_method(D_METHOD("play_step"), &OFEMatch::play_step);
+        ClassDB::bind_method(D_METHOD("replay_info"), &OFEMatch::replay_info);
+        ClassDB::bind_method(D_METHOD("replay_export"), &OFEMatch::replay_export);
+        ClassDB::bind_method(D_METHOD("play_load", "bytes"), &OFEMatch::play_load);
         ClassDB::bind_method(D_METHOD("snapshot"), &OFEMatch::snapshot);
         ClassDB::bind_method(D_METHOD("image", "image_id"), &OFEMatch::image);
     }
@@ -182,16 +190,41 @@ class OFEMatch : public RefCounted {
                            static_cast<uint32_t>(p2));
     }
 
-    Dictionary snapshot() {
+    int64_t training_reset() { return ofe_v2_training_reset(token); }
+    int64_t record_begin() { return ofe_v2_record_begin(token); }
+    int64_t record_end() { return ofe_v2_record_end(token); }
+    int64_t play_begin() { return ofe_v2_play_begin(token); }
+    int64_t play_step() { return ofe_v2_play_step(token); }
+    int64_t play_load(const PackedByteArray &data) {
+        if (data.size() > std::numeric_limits<uint32_t>::max()) {
+            return OFE_LIMIT;
+        }
+        return ofe_v2_play_load(token, data.ptr(), static_cast<uint32_t>(data.size()));
+    }
+    PackedByteArray replay_export() {
+        PackedByteArray bytes;
+        uint32_t length = 0;
+        if (ofe_v2_replay_export(token, nullptr, 0, &length) != OFE_LIMIT || length == 0 ||
+            bytes.resize(length) != 0 ||
+            ofe_v2_replay_export(token, bytes.ptrw(), length, &length) != OFE_OK) {
+            return {};
+        }
+        return bytes;
+    }
+    Dictionary snapshot() { return read_dictionary(ofe_v2_snapshot); }
+    Dictionary replay_info() { return read_dictionary(ofe_v2_replay_info); }
+
+  private:
+    Dictionary read_dictionary(int32_t (*read)(uint64_t, uint8_t *, uint32_t, uint32_t *)) {
         uint32_t length = 0;
         auto capacity = static_cast<uint32_t>(snapshot_buffer.size());
         uint8_t *data = capacity == 0 ? nullptr : snapshot_buffer.ptrw();
-        int32_t status = ofe_v2_snapshot(token, data, capacity, &length);
+        int32_t status = read(token, data, capacity, &length);
         if (status == OFE_LIMIT) {
             if (snapshot_buffer.resize(length) != 0) {
                 return status_only(OFE_LIMIT);
             }
-            status = ofe_v2_snapshot(token, snapshot_buffer.ptrw(), length, &length);
+            status = read(token, snapshot_buffer.ptrw(), length, &length);
         }
         if (status != OFE_OK) {
             return status_only(status);
@@ -207,6 +240,7 @@ class OFEMatch : public RefCounted {
         return result;
     }
 
+  public:
     PackedByteArray image(int64_t image_id) const {
         PackedByteArray result;
         if (image_id < 0 || image_id > std::numeric_limits<uint32_t>::max()) {

@@ -17,8 +17,13 @@ var dummy_mode := 0
 var _guard_after_hit := false
 var _slow_tick := 0
 var _step_pending := false
-var _tape: Array[PackedInt32Array] = []
-var _tape_infinite := true
+var replay_path := "user://training.ofr"
+var replay_message: String:
+	get: return $HUD.message.text
+var _recorded_frames := 0
+const ReplayFile = preload("res://demo/replay_file.gd")
+var _file_thread: Thread
+var _loading_file := false
 var _ended := false
 var _pad_ids := PackedInt32Array()
 
@@ -64,22 +69,27 @@ func _controllers_changed(_device: int, _connected: bool) -> void:
 	_pad_ids = Input.get_connected_joypads()
 
 func restart() -> bool:
+	_finish_file(true)
 	recording = false
 	replaying = false
 	return _new_round()
 
 func _new_round() -> bool:
-	_close()
 	_ended = false
 	_step_pending = false
 	_guard_after_hit = false
 	_slow_tick = 0
-	if _dirs.size() != roster.size() or not ClassDB.class_exists(&"OFEMatch"):
-		return _fail("Could not load characters or native extension. Esc to leave.")
-	match_instance = ClassDB.instantiate(&"OFEMatch")
-	if not match_instance.has_method("open_roster") or match_instance.open_roster(_dirs, mode) != 0:
-		match_instance = null
-		return _fail("Could not open this match. Esc to leave.")
+	if mode == "training" and match_instance != null:
+		if match_instance.training_reset() != 0:
+			return _fail("Could not reset the training match.")
+	else:
+		_close()
+		if _dirs.size() != roster.size() or not ClassDB.class_exists(&"OFEMatch"):
+			return _fail("Could not load characters or native extension. Esc to leave.")
+		match_instance = ClassDB.instantiate(&"OFEMatch")
+		if not match_instance.has_method("open_roster") or match_instance.open_roster(_dirs, mode) != 0:
+			match_instance = null
+			return _fail("Could not open this match. Esc to leave.")
 	if mode == "training" and match_instance.set_infinite_health(infinite_health) != 0:
 		return _fail("Could not configure training health. Esc to leave.")
 	$HUD.message.text = ""
@@ -101,12 +111,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if mode == "training" and event is InputEventKey and event.pressed and not event.echo:
 		var code: int = event.physical_keycode if event.physical_keycode else event.keycode
-		if code >= KEY_F1 and code <= KEY_F9:
+		if code >= KEY_F1 and code <= KEY_F11:
 			get_viewport().set_input_as_handled()
 			_training_action(code - KEY_F1)
 
 func _training_action(index: int) -> void:
-	if suspended or match_instance == null:
+	if suspended or match_instance == null or replay_io_pending():
 		return
 	match index:
 		0:
@@ -132,19 +142,70 @@ func _training_action(index: int) -> void:
 			_step_pending = true
 		7:
 			if recording:
+				match_instance.record_end()
 				recording = false
-			elif restart():
-				_tape.clear()
-				_tape_infinite = infinite_health
+			elif restart() and match_instance.record_begin() == 0:
+				_recorded_frames = 0
 				recording = true
 				frozen = false
 		8:
-			if not _tape.is_empty():
-				infinite_health = _tape_infinite
-				if restart():
-					replaying = true
-					frozen = false
+			if _recorded_frames > 0:
+				_start_replay(match_instance.play_begin())
+		9:
+			_begin_file(false)
+		10:
+			_begin_file(true)
 	_update_training()
+
+func _start_replay(status: int) -> void:
+	var info: Dictionary = match_instance.replay_info()
+	if status != 0:
+		$HUD.message.text = info.get("error", "Could not open replay.")
+		return
+	$HUD.message.text = ""
+	_recorded_frames = int(info.frames)
+	infinite_health = info.infinite_health
+	recording = false
+	replaying = true
+	frozen = false
+	_step_pending = false
+	_guard_after_hit = false
+	_slow_tick = 0
+	_present()
+
+func replay_io_pending() -> bool:
+	return _file_thread != null
+
+func _begin_file(loading: bool) -> void:
+	if not loading and (recording or replaying or _recorded_frames == 0):
+		$HUD.message.text = "Finish a recording before saving."
+		return
+	_loading_file = loading
+	var operation := ReplayFile.load_recording if loading else ReplayFile.save
+	var worker := Thread.new()
+	if worker.start(operation.bind(match_instance, ProjectSettings.globalize_path(replay_path))) != OK:
+		$HUD.message.text = "Could not start replay file operation."
+		return
+	_file_thread = worker
+	$HUD.message.text = "Checking replay…" if loading else "Saving replay…"
+
+func _finish_file(wait := false) -> void:
+	if _file_thread == null or (not wait and _file_thread.is_alive()):
+		return
+	var message: String = _file_thread.wait_to_finish()
+	_file_thread = null
+	if not message.is_empty():
+		$HUD.message.text = message
+	elif _loading_file:
+		_start_replay(0)
+	else:
+		$HUD.message.text = "Replay saved  ·  %s" % replay_path.get_file()
+
+func _exit_tree() -> void:
+	if _file_thread != null:
+		_file_thread.wait_to_finish()
+		_file_thread = null
+	super()
 
 func _input_mask(player: int) -> int:
 	var mask := 0
@@ -164,6 +225,9 @@ func _input_mask(player: int) -> int:
 	return mask
 
 func _physics_process(_delta: float) -> void:
+	if replay_io_pending():
+		_finish_file()
+		return
 	if suspended or _ended or match_instance == null:
 		return
 	if frozen and not _step_pending:
@@ -173,26 +237,32 @@ func _physics_process(_delta: float) -> void:
 		if _slow_tick != 0:
 			return
 	_step_pending = false
-	var masks := PackedInt32Array()
+	var frame := int(current.frame) + 1
 	if replaying:
-		masks = _tape[int(current.frame)]
+		if match_instance.play_step() != 0:
+			replaying = false
+			frozen = true
+			$HUD.message.text = match_instance.replay_info().get("error", "Replay diverged.")
+			_update_training()
+			return
+		if frame == _recorded_frames:
+			replaying = false
+			frozen = true
 	else:
+		var masks := PackedInt32Array()
 		for i in range(roster.size()):
 			if mode == "training" and i == 1:
 				masks.append(32 if dummy_mode == 1 or _guard_after_hit else 0)
 			else:
 				masks.append(_input_mask(i))
-	var frame := int(current.frame) + 1
-	if match_instance.step_roster(frame, masks) != 0:
-		_fail("Frame %d failed. Esc to leave." % frame)
-		return
-	if recording:
-		_tape.append(masks)
-		if _tape.size() >= TAPE_LIMIT:
-			recording = false
-	if replaying and frame == _tape.size():
-		replaying = false
-		frozen = true
+		if match_instance.step_roster(frame, masks) != 0:
+			_fail("Frame %d failed. Esc to leave." % frame)
+			return
+		if recording:
+			_recorded_frames += 1
+			if _recorded_frames >= TAPE_LIMIT:
+				match_instance.record_end()
+				recording = false
 	if _present() and mode != "training":
 		_check_winner()
 
@@ -234,7 +304,7 @@ func _check_winner() -> void:
 
 func _update_training() -> void:
 	$HUD.training_status(current, dummy_mode, boxes_visible, infinite_health, slow_motion,
-		frozen, recording, replaying, _tape.size())
+		frozen, recording, replaying, _recorded_frames)
 
 func _on_projectiles_draw() -> void:
 	super()

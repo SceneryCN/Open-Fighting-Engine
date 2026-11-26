@@ -7,6 +7,8 @@ use ofe_combat_core::{
     arena::{Arena, ArenaEvent, ArenaFighter, Command},
     duel::{AttackConfig, Controls, DuelError, Event, Rect, State},
 };
+mod replay;
+use replay::Tape;
 use serde_json::{Value, json};
 use std::{
     collections::HashMap,
@@ -194,6 +196,7 @@ struct Match {
     arena: Arena,
     actors: Vec<Actor>,
     training: bool,
+    tape: Tape,
     images: Vec<Arc<[u8]>>,
     image_ids: HashMap<usize, u32>,
     snapshot: Vec<u8>,
@@ -238,6 +241,7 @@ impl Match {
         let mut instance = Self {
             arena,
             training: mode == 3,
+            tape: Tape::default(),
             actors,
             images,
             image_ids,
@@ -286,13 +290,19 @@ impl Match {
         for (i, &mask) in masks.iter().enumerate() {
             commands[i] = command(i as u32 + 1, mask)?;
         }
-        self.arena
-            .step(frame, &commands[..masks.len()])
-            .map_err(|e| match e {
-                DuelError::WrongFrame => INPUT_CONFLICT,
-                DuelError::Overflow => LIMIT,
-                DuelError::InvalidInput | DuelError::InvalidConfig => INVALID_ARGUMENT,
-            })?;
+        let commands = &commands[..masks.len()];
+        self.tape.check_live(frame)?;
+        self.arena.step(frame, commands).map_err(|e| match e {
+            DuelError::WrongFrame => INPUT_CONFLICT,
+            DuelError::Overflow => LIMIT,
+            DuelError::InvalidInput | DuelError::InvalidConfig => INVALID_ARGUMENT,
+        })?;
+        self.tape.record(&self.arena, commands)?;
+        self.after_step();
+        Ok(())
+    }
+
+    fn after_step(&mut self) {
         for event in self.arena.events() {
             if let ArenaEvent::Base(Event::Hit {
                 attacker, damage, ..
@@ -305,7 +315,6 @@ impl Match {
             actor.tick(slot.fighter.state);
         }
         self.refresh();
-        Ok(())
     }
 }
 
@@ -461,7 +470,7 @@ pub extern "C" fn ofe_v2_set_infinite_health(handle: u64, enabled: u32) -> i32 {
     guarded(|| {
         let mut registry = MATCHES.lock().map_err(|_| INTERNAL)?;
         let instance = registry.active.get_mut(&handle).ok_or(INVALID_HANDLE)?;
-        if enabled > 1 || !instance.training {
+        if enabled > 1 || !instance.training || instance.tape.busy() {
             return Err(INVALID_ARGUMENT);
         }
         instance.arena.set_infinite_health(enabled != 0);

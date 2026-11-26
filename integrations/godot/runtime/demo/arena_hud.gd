@@ -63,7 +63,7 @@ func _training_controls() -> void:
 	row.size = Vector2(936, 42)
 	row.add_theme_constant_override("separation", 4)
 	add_child(row)
-	for i in range(9):
+	for i in range(11):
 		var button := Button.new()
 		button.focus_mode = Control.FOCUS_NONE
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -96,13 +96,14 @@ func training_status(snap: Dictionary, dummy: int, boxes: bool, infinite: bool, 
 		freeze: bool, rec: bool, replay: bool, length: int) -> void:
 	var captions := [["Stand", "Guard", "After hit"][dummy], "Boxes " + ("on" if boxes else "off"),
 		"HP " + ("∞" if infinite else "finite"), "Reset", "Speed " + ("¼" if slow else "1×"),
-		"Resume" if freeze else "Freeze", "Step", "Stop" if rec else "Record", "Replay"]
+		"Resume" if freeze else "Freeze", "Step", "Stop" if rec else "Record", "Replay", "Save", "Load"]
 	if captions != previous_buttons:
 		for i in range(buttons.size()):
 			buttons[i].text = "F%d\n%s" % [i + 1, captions[i]]
 		previous_buttons = captions
 	buttons[2].disabled = rec or replay
 	buttons[8].disabled = length == 0
+	buttons[9].disabled = rec or replay or length == 0
 	var status := "Recording" if rec else ("Replaying" if replay else "Saved inputs")
 	tape_label.text = "Frame  %d     ·     %s  %d frames     ·     Gold  push    Cyan  hurt    Coral  hit" % [
 		int(snap.get("frame", 0)), status, length]

@@ -51,6 +51,10 @@ func _ready() -> void:
 		test_driver = load("res://demo/smoke.gd").new()
 		test_driver.run.call_deferred(self)
 
+	elif "--p6-test" in args:
+		test_driver = load("res://demo/smoke_p6.gd").new()
+		test_driver.run.call_deferred(self)
+
 func _page(id: String) -> void:
 	if page != null:
 		remove_child(page)

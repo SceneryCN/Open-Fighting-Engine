@@ -75,11 +75,13 @@ jobs:
         shell: bash
         run: |
           exe="$(python scripts/build/ci-godot.py build/downloads | tr -d '\r')"
-          python scripts/test/headless.py "$exe"
+          sim="$PWD/target/release/ofe-sim"
+          if [[ "$RUNNER_OS" == Windows ]]; then sim="$sim.exe"; fi
+          python scripts/test/headless.py "$exe" --simulator "$sim"
           if [[ "$RUNNER_OS" == macOS ]]; then python scripts/release/prepare_macos.py; fi
           mkdir -p build/export
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
-          python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported
+          python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported --simulator "$sim"
           python scripts/release/package_runtime.py build/export build/ofe-runtime.tar.gz
       - uses: actions/upload-artifact@v7
         with:
