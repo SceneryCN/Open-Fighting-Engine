@@ -349,3 +349,23 @@ fn identical_input_repeats_states_and_ordered_events_each_frame() {
     }
     assert_eq!(first.frame(), tick_count);
 }
+
+#[test]
+fn walking_behind_a_locked_attack_avoids_its_active_frame() {
+    let mut cfg = config(5);
+    cfg.fighters[0].attack.startup = 1;
+    cfg.fighters[1].walk_speed = 10;
+    let mut game = create(cfg);
+    tick(&mut game, attack(), neutral());
+    tick(
+        &mut game,
+        neutral(),
+        Controls {
+            axis: -1,
+            ..neutral()
+        },
+    );
+    assert_eq!(game.fighters()[1].position.x, -5);
+    assert_eq!(game.fighters()[1].health, 100);
+    assert!(hits(&game).is_empty());
+}
