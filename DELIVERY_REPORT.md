@@ -7,3 +7,5 @@
 本机 release 产物从独立目录解包，可在包内运行作者工具、制作 amber.ofc 并完成 26 帧对局。独立 QA 执行 73 项 Rust 测试、15 项格式测试及 8 项外部 CLI 测试。修改外部角色的生命和伤害后，同一可执行文件的命中结果从 114 HP 变为 181 HP；单独修改动画事件和帧时长，两次对战输出逐字节相同。
 
 当前 Arena 的角色绑定需要一个攻击框和一个受击框；角色读取层可保留多个框组。P3 的 PNG 支持读取图像资源、帧索引、原点和图集区域。完整的 Godot 对战画面及其帧时间在 P4 验证。
+
+[独立 QA 记录](docs/testing/P3_ACCEPTANCE_REPORT.md) · [P3 四目标发布与回归](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45794232658)
