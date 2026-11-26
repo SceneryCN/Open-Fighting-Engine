@@ -256,6 +256,43 @@ fn rollback_trace() {
     println!("trace rollback_retry frames=64 hash={:016x}", transcript.0);
 }
 
+// Reach settlement before overflowing on the last target. Retrying the same frame
+// with that fighter guarding must commit exactly the same contacts as the control.
+fn settlement_retry_trace() {
+    let (mut config, attacks) = configured(Load::Trade);
+    for (index, fighter) in config.fighters.iter_mut().enumerate() {
+        fighter.base.spawn.x = i32::MAX - 3 + index as i32;
+    }
+    config.fighters[0].moves[0].base.pushback = 1;
+    config.fighters[0].base.attack = config.fighters[0].moves[0].base;
+    let mut test = Arena::new(config.clone()).unwrap();
+    let mut control = Arena::new(config).unwrap();
+    let strike = attacks[0];
+    assert_eq!(test.step(1, &[strike]), Err(DuelError::Overflow));
+    assert_eq!(test.frame(), 0);
+    assert_eq!(test.fighters(), control.fighters());
+    assert_eq!(test.events(), control.events());
+    let mut block = Command {
+        id: attacks[3].id,
+        ..Default::default()
+    };
+    block.controls.guard = true;
+    let retry = [strike, block];
+    let mut transcript = Digest::new();
+    for tick in 1..=64 {
+        let commands: &[Command] = if tick == 1 { &retry } else { &[] };
+        test.step(tick, commands).unwrap();
+        control.step(tick, commands).unwrap();
+        assert_eq!(test.fighters(), control.fighters());
+        assert_eq!(test.events(), control.events());
+        transcript.observe(&test);
+    }
+    println!(
+        "trace settlement_retry frames=64 hash={:016x}",
+        transcript.0
+    );
+}
+
 fn main() {
     let mut frames = DEFAULT_FRAMES;
     let mut trace = false;
@@ -276,6 +313,7 @@ fn main() {
     }
     if trace {
         rollback_trace();
+        settlement_retry_trace();
     } else {
         println!(
             "workload,frames,min_live,max_live,hits,events,spawned,p50_ns,p95_ns,p99_ns,max_ns,missed_60hz"
