@@ -83,18 +83,37 @@ pub fn bind(
     scene_json: &str,
     advanced_json: &str,
 ) -> Result<ArenaConfig, String> {
+    bind_roster(&combat, &[1, 2], scene_json, advanced_json)
+}
+
+/// Bind two or four independently authored fighters in ID order.
+/// The four-player layout places ordered slots across the near lane.
+pub fn bind_roster(
+    combat: &[&CombatData],
+    teams: &[u32],
+    scene_json: &str,
+    advanced_json: &str,
+) -> Result<ArenaConfig, String> {
+    if !matches!(combat.len(), 2 | 4) || teams.len() != combat.len() {
+        return Err("invalid roster size".into());
+    }
     let scene: Scene = serde_json::from_str(scene_json).map_err(|e| e.to_string())?;
     let advanced: Advanced = serde_json::from_str(advanced_json).map_err(|e| e.to_string())?;
-    let mut fighters = Vec::with_capacity(2);
-    for (i, (movement, data)) in scene.fighters.into_iter().zip(combat).enumerate() {
+    let mut fighters = Vec::with_capacity(combat.len());
+    for (i, data) in combat.iter().enumerate() {
+        let movement = &scene.fighters[i % 2];
         let moves = data.combat_moves()?;
         let id = i as u32 + 1;
         fighters.push(CombatantConfig {
             id,
-            team: id,
+            team: teams[i],
             base: FighterConfig {
                 spawn: Position {
-                    x: movement.spawn.x,
+                    x: if combat.len() == 4 {
+                        [-6, -2, 2, 6][i]
+                    } else {
+                        movement.spawn.x
+                    },
                     z: movement.spawn.z,
                     h: movement.spawn.h,
                 },

@@ -37,6 +37,7 @@ impl Duel {
                         cancels: Vec::new(),
                         armor: 0,
                         invulnerability: 0,
+                        launch_speed: 0,
                         energy_cost: 0,
                     }],
                     dash_speed: 1,

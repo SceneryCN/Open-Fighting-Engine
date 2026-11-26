@@ -32,6 +32,7 @@ impl ResolvedMove {
             cancels: self.cancels.clone(),
             armor: m.armor,
             invulnerability: m.invulnerability,
+            launch_speed: m.launch_speed.unwrap_or(0),
             energy_cost: m.energy_cost as i32,
         }
     }
@@ -71,6 +72,8 @@ pub(crate) struct Move {
     invulnerability: u32,
     #[serde(deserialize_with = "json_integer::read")]
     pushback: i32,
+    #[serde(default, deserialize_with = "json_integer::optional")]
+    launch_speed: Option<i32>,
     cancel_windows: Vec<Bounds>,
     lane_rule: String,
     #[serde(default, deserialize_with = "json_integer::optional")]
@@ -204,6 +207,7 @@ pub(crate) fn moves(
                 m.energy_cost,
             ];
             if !valid_id(&m.id)
+                || m.launch_speed.is_some_and(|speed| speed < 0)
                 || m.damage < 0
                 || m.active == 0
                 || durations.iter().any(|&v| v > i32::MAX as u32)

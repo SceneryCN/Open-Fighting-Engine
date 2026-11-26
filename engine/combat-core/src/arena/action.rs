@@ -208,6 +208,9 @@ impl Timers {
                 spent: 0,
                 armor: config.moves[index].armor,
             });
+            if config.moves[index].launch_speed > 0 {
+                self.velocity = config.moves[index].launch_speed;
+            }
             view.energy -= config.moves[index].energy_cost;
             effects.events.push(ArenaEvent::Started {
                 id,
@@ -235,6 +238,9 @@ impl Timers {
             _ => None,
         };
         let f = &mut view.fighter;
+        if matches!(self.action, Action::Attack(_)) && (self.velocity != 0 || f.position.h != 0) {
+            airborne(f, self, config.base.gravity)?;
+        }
         match &mut self.action {
             Action::Attack(a) => {
                 f.state = State::Attack;

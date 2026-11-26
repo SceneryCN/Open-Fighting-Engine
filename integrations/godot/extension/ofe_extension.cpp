@@ -9,6 +9,10 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 
+#include <godot_cpp/variant/packed_int32_array.hpp>
+#include <godot_cpp/variant/packed_string_array.hpp>
+
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -104,6 +108,10 @@ class OFEMatch : public RefCounted {
         ClassDB::bind_method(D_METHOD("open", "p1_dir", "p2_dir"), &OFEMatch::open);
         ClassDB::bind_method(D_METHOD("close"), &OFEMatch::close);
         ClassDB::bind_method(D_METHOD("step", "frame", "p1", "p2"), &OFEMatch::step);
+        ClassDB::bind_method(D_METHOD("open_roster", "dirs", "mode"), &OFEMatch::open_roster);
+        ClassDB::bind_method(D_METHOD("step_roster", "frame", "masks"), &OFEMatch::step_roster);
+        ClassDB::bind_method(D_METHOD("set_infinite_health", "enabled"),
+                             &OFEMatch::set_infinite_health);
         ClassDB::bind_method(D_METHOD("snapshot"), &OFEMatch::snapshot);
         ClassDB::bind_method(D_METHOD("image", "image_id"), &OFEMatch::image);
     }
@@ -116,6 +124,44 @@ class OFEMatch : public RefCounted {
         const CharString p1 = p1_dir.utf8();
         const CharString p2 = p2_dir.utf8();
         return ofe_v2_create(p1.get_data(), p2.get_data(), &token);
+    }
+
+    int64_t open_roster(const PackedStringArray &dirs, const String &mode) {
+        if (token != 0 || (dirs.size() != 2 && dirs.size() != 4)) {
+            return OFE_INVALID_ARGUMENT;
+        }
+        const std::array<String, 4> names = {"duel", "team", "ffa", "training"};
+        uint32_t which = 0;
+        while (which < names.size() && names[which] != mode) {
+            ++which;
+        }
+        if (which == names.size()) {
+            return OFE_INVALID_ARGUMENT;
+        }
+        std::array<CharString, 4> utf8;
+        std::array<const char *, 4> paths;
+        for (int64_t i = 0; i < dirs.size(); ++i) {
+            utf8[i] = dirs[i].utf8();
+            paths[i] = utf8[i].get_data();
+        }
+        return ofe_v2_create_roster(paths.data(), static_cast<uint32_t>(dirs.size()), which,
+                                    &token);
+    }
+
+    int64_t step_roster(int64_t frame, const PackedInt32Array &masks) {
+        if (frame <= 0 || (masks.size() != 2 && masks.size() != 4)) {
+            return OFE_INVALID_ARGUMENT;
+        }
+        std::array<uint32_t, 4> inputs;
+        for (int64_t i = 0; i < masks.size(); ++i) {
+            inputs[i] = static_cast<uint32_t>(masks[i]);
+        }
+        return ofe_v2_step_roster(token, static_cast<uint64_t>(frame), inputs.data(),
+                                  static_cast<uint32_t>(masks.size()));
+    }
+
+    int64_t set_infinite_health(bool enabled) {
+        return ofe_v2_set_infinite_health(token, enabled ? 1 : 0);
     }
 
     int64_t close() {

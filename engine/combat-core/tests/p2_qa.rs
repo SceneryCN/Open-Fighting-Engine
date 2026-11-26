@@ -28,6 +28,7 @@ fn strike() -> MoveConfig {
         cancels: vec![],
         armor: 0,
         invulnerability: 0,
+        launch_speed: 0,
         energy_cost: 0,
     }
 }

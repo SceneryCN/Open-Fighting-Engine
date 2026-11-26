@@ -35,7 +35,7 @@ impl CombatantConfig {
 
 impl MoveConfig {
     fn valid(&self, index: usize, move_count: usize) -> bool {
-        if !self.base.valid() || self.energy_cost < 0 {
+        if !self.base.valid() || self.energy_cost < 0 || self.launch_speed < 0 {
             return false;
         }
         if let MoveKind::Projectile { speed, lifetime } = self.kind
@@ -112,6 +112,7 @@ pub struct Arena {
     effects: FrameEffects,
     contacts: Vec<Contact>,
     idle: bool,
+    infinite_health: bool,
 }
 
 fn facing(actors: &[ArenaFighter], i: usize) -> i32 {
@@ -194,6 +195,7 @@ impl Arena {
         let event_capacity = 2 * contact_capacity + 6 * n;
         Ok(Self {
             config,
+            infinite_health: false,
             idle: world
                 .fighters
                 .iter()
@@ -209,6 +211,57 @@ impl Arena {
             frame: 0,
             events: Vec::with_capacity(event_capacity),
         })
+    }
+
+    /// Disable health loss while leaving contact resolution and damage events intact.
+    pub fn set_infinite_health(&mut self, enabled: bool) {
+        self.infinite_health = enabled;
+    }
+
+    /// Committed action age, melee activity and remaining hit/block stun by roster index.
+    pub fn training_timing(&self, slot: usize) -> Option<(u64, bool, u32, u32)> {
+        let timer = self.world.timers.get(slot)?;
+        Some(match timer.action {
+            Action::Attack(a) => (
+                a.age.saturating_sub(1),
+                a.window.is_some()
+                    && !matches!(
+                        self.config.fighters[slot].moves[a.index].kind,
+                        MoveKind::Projectile { .. }
+                    ),
+                0,
+                0,
+            ),
+            Action::Stun {
+                remaining,
+                state: State::Hitstun,
+            } => (0, false, remaining, 0),
+            Action::Stun {
+                remaining,
+                state: State::Blockstun,
+            } => (0, false, 0, remaining),
+            _ => (0, false, 0, 0),
+        })
+    }
+
+    /// Return live projectile hit geometry for this owner in world coordinates.
+    pub fn projectile_bounds(&self, owner: usize) -> impl Iterator<Item = (i32, [i64; 4])> + '_ {
+        self.world
+            .projectiles
+            .iter()
+            .zip(&self.world.flights)
+            .filter(move |(_, flight)| flight.owner == owner)
+            .map(move |(p, flight)| {
+                let body = Fighter {
+                    position: p.position,
+                    facing: flight.facing,
+                    ..self.world.fighters[owner].fighter
+                };
+                let hit = self.config.fighters[owner].moves[flight.move_index]
+                    .base
+                    .hitbox;
+                (p.position.z, hit.bounds(body))
+            })
     }
 
     /// Last committed tick.
@@ -307,7 +360,7 @@ impl Arena {
                 &mut self.contacts,
                 &mut effects.events,
             )?;
-            world.apply(&self.config, &self.contacts, &impacts)?;
+            world.apply(&self.config, &self.contacts, &impacts, self.infinite_health)?;
         }
         for (old, new) in self.world.fighters.iter().zip(&world.fighters) {
             let id = new.fighter.id;
@@ -525,6 +578,7 @@ impl World {
         config: &ArenaConfig,
         contacts: &[Contact],
         impacts: &[resolve::Impact; 4],
+        infinite_health: bool,
     ) -> Result<(), DuelError> {
         for c in contacts {
             let mut cast = c.instance;
@@ -548,7 +602,10 @@ impl World {
         for (i, (view, impact)) in self.fighters.iter_mut().zip(impacts).enumerate() {
             view.combo = *self.combos[i].iter().max().expect("fixed four slots");
             view.hitstop = view.hitstop.max(impact.hitstop);
-            view.fighter.health = (i64::from(view.fighter.health) - impact.damage).max(0) as i32;
+            if !infinite_health {
+                view.fighter.health =
+                    (i64::from(view.fighter.health) - impact.damage).max(0) as i32;
+            }
             shift(&mut view.fighter.position.x, impact.push)?;
             if let Action::Attack(ref mut a) = self.timers[i].action {
                 a.armor -= impact.armor_used;

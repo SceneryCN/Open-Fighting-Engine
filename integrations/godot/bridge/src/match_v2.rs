@@ -5,7 +5,7 @@ use ofe_animation_runtime::{Clip, Playback};
 use ofe_character_runtime::{Character, duel_scene};
 use ofe_combat_core::{
     arena::{Arena, ArenaEvent, ArenaFighter, Command},
-    duel::{Controls, DuelError, Event, State},
+    duel::{AttackConfig, Controls, DuelError, Event, Rect, State},
 };
 use serde_json::{Value, json};
 use std::{
@@ -76,16 +76,49 @@ struct Actor {
     fallback: usize,
     player: Playback<Arc<Clip>>,
     has_events: bool,
+    moves: Vec<(String, AttackConfig)>,
+    boxes: Vec<(String, Rect)>,
+    damage: i32,
 }
 
 impl Actor {
-    fn new(character: Character) -> Self {
+    fn new(character: Character) -> Result<Self, i32> {
+        let hit = character
+            .combat
+            .rectangle("hit")
+            .map_err(|_| INVALID_ARGUMENT)?;
+        let moves = character
+            .combat
+            .moves
+            .iter()
+            .map(|m| (m.id().to_owned(), m.combat_move(hit).base))
+            .collect();
+        let boxes = character
+            .combat
+            .boxes
+            .iter()
+            .flat_map(|(_, bs)| bs)
+            .map(|b| {
+                (
+                    b.kind.clone(),
+                    Rect {
+                        x: b.x,
+                        h: b.h,
+                        width: b.width,
+                        height: b.height,
+                    },
+                )
+            })
+            .collect();
         let clips: Vec<_> = character.animations.into_iter().map(Arc::new).collect();
         let fallback = clips
             .iter()
             .position(|clip| clip.id() == "idle")
             .unwrap_or(0);
-        Self {
+        Ok(Self {
+            moves,
+            boxes,
+            damage: 0,
             name: character.name,
             max_hp: character.combat.attributes.max_health,
             max_energy: character.combat.attributes.max_energy,
@@ -94,7 +127,7 @@ impl Actor {
             active: fallback,
             fallback,
             has_events: false,
-        }
+        })
     }
 
     fn tick(&mut self, state: State) {
@@ -108,6 +141,38 @@ impl Actor {
             self.player = Playback::new(Arc::clone(&self.clips[active]));
         }
         self.has_events = !self.player.tick().is_empty();
+    }
+
+    fn world_box(kind: &str, z: i32, [left, right, bottom, top]: [i64; 4]) -> Value {
+        json!({"kind":kind,"x":left,"h":bottom,"z":z,"width":right-left,"height":top-bottom})
+    }
+
+    fn training_snapshot(
+        &self,
+        result: &mut Value,
+        slot: &ArenaFighter,
+        timing: (u64, bool, u32, u32),
+        projectiles: impl Iterator<Item = (i32, [i64; 4])>,
+    ) {
+        let f = slot.fighter;
+        let (age, hit, hitstun, blockstun) = timing;
+        let current_move = slot.move_index.map(|i| &self.moves[i]);
+        result["move_id"] = json!(current_move.map_or("", |(id, _)| id));
+        result["move_age"] = json!(age);
+        result["startup"] = json!(current_move.map_or(0, |(_, m)| m.startup));
+        result["active"] = json!(current_move.map_or(0, |(_, m)| m.active));
+        result["recovery"] = json!(current_move.map_or(0, |(_, m)| m.recovery));
+        result["hitstun"] = json!(hitstun);
+        result["blockstun"] = json!(blockstun);
+        result["combo"] = json!(slot.combo);
+        result["damage"] = json!(self.damage);
+        let character_boxes = self
+            .boxes
+            .iter()
+            .filter(|(kind, _)| kind != "hit" || hit)
+            .map(|(kind, b)| Self::world_box(kind, f.position.z, b.bounds(f)));
+        let projectile_boxes = projectiles.map(|(z, bounds)| Self::world_box("hit", z, bounds));
+        result["boxes"] = Value::Array(character_boxes.chain(projectile_boxes).collect());
     }
 
     fn snapshot(&self, slot: &ArenaFighter, image_ids: &HashMap<usize, u32>) -> Value {
@@ -127,20 +192,36 @@ impl Actor {
 
 struct Match {
     arena: Arena,
-    actors: [Actor; 2],
+    actors: Vec<Actor>,
+    training: bool,
     images: Vec<Arc<[u8]>>,
     image_ids: HashMap<usize, u32>,
     snapshot: Vec<u8>,
 }
 
 impl Match {
-    fn open(first: &Path, second: &Path) -> Result<Self, i32> {
-        let a = Character::load(first).map_err(|_| INVALID_ARGUMENT)?;
-        let b = Character::load(second).map_err(|_| INVALID_ARGUMENT)?;
-        let config = duel_scene::bind([&a.combat, &b.combat], SCENE, ADVANCED)
+    fn open(dirs: &[&Path], mode: u32) -> Result<Self, i32> {
+        let teams: &[u32] = match mode {
+            0 | 3 => &[1, 2],
+            1 => &[1, 1, 2, 2],
+            2 => &[1, 2, 3, 4],
+            _ => return Err(INVALID_ARGUMENT),
+        };
+        if teams.len() != dirs.len() {
+            return Err(INVALID_ARGUMENT);
+        }
+        let characters = dirs
+            .iter()
+            .map(|p| Character::load(p).map_err(|_| INVALID_ARGUMENT))
+            .collect::<Result<Vec<_>, _>>()?;
+        let combat = characters.iter().map(|c| &c.combat).collect::<Vec<_>>();
+        let config = duel_scene::bind_roster(&combat, teams, SCENE, ADVANCED)
             .map_err(|_| INVALID_ARGUMENT)?;
         let arena = Arena::new(config).map_err(|_| INVALID_ARGUMENT)?;
-        let actors = [Actor::new(a), Actor::new(b)];
+        let actors = characters
+            .into_iter()
+            .map(Actor::new)
+            .collect::<Result<Vec<_>, _>>()?;
         let mut images = Vec::new();
         let mut image_ids = HashMap::new();
         for actor in &actors {
@@ -156,6 +237,7 @@ impl Match {
         }
         let mut instance = Self {
             arena,
+            training: mode == 3,
             actors,
             images,
             image_ids,
@@ -170,7 +252,19 @@ impl Match {
             .actors
             .iter()
             .zip(self.arena.fighters())
-            .map(|(actor, slot)| actor.snapshot(slot, &self.image_ids))
+            .enumerate()
+            .map(|(i, (actor, slot))| {
+                let mut snap = actor.snapshot(slot, &self.image_ids);
+                if self.training {
+                    actor.training_snapshot(
+                        &mut snap,
+                        slot,
+                        self.arena.training_timing(i).expect("matching roster"),
+                        self.arena.projectile_bounds(i),
+                    );
+                }
+                snap
+            })
             .collect();
         let events: Vec<_> = self.arena.events().iter().map(event_json).collect();
         let projectiles:Vec<_>=self.arena.projectiles().iter().map(|p|
@@ -184,13 +278,29 @@ impl Match {
         .expect("JSON value can be written to Vec");
     }
 
-    fn step(&mut self, frame: u64, p1: u32, p2: u32) -> Result<(), i32> {
-        let commands = [command(1, p1)?, command(2, p2)?];
-        self.arena.step(frame, &commands).map_err(|e| match e {
-            DuelError::WrongFrame => INPUT_CONFLICT,
-            DuelError::Overflow => LIMIT,
-            DuelError::InvalidInput | DuelError::InvalidConfig => INVALID_ARGUMENT,
-        })?;
+    fn step(&mut self, frame: u64, masks: &[u32]) -> Result<(), i32> {
+        if masks.len() != self.actors.len() {
+            return Err(INVALID_ARGUMENT);
+        }
+        let mut commands = [Command::default(); 4];
+        for (i, &mask) in masks.iter().enumerate() {
+            commands[i] = command(i as u32 + 1, mask)?;
+        }
+        self.arena
+            .step(frame, &commands[..masks.len()])
+            .map_err(|e| match e {
+                DuelError::WrongFrame => INPUT_CONFLICT,
+                DuelError::Overflow => LIMIT,
+                DuelError::InvalidInput | DuelError::InvalidConfig => INVALID_ARGUMENT,
+            })?;
+        for event in self.arena.events() {
+            if let ArenaEvent::Base(Event::Hit {
+                attacker, damage, ..
+            }) = event
+            {
+                self.actors[*attacker as usize - 1].damage = *damage;
+            }
+        }
         for (actor, slot) in self.actors.iter_mut().zip(self.arena.fighters()) {
             actor.tick(slot.fighter.state);
         }
@@ -238,21 +348,47 @@ fn guarded(operation: impl FnOnce() -> Result<(), i32>) -> i32 {
 /// Paths are live NUL-terminated strings. Output is exclusive aligned token storage.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ofe_v2_create(p1: *const c_char, p2: *const c_char, out: *mut u64) -> i32 {
-    if p1.is_null() || p2.is_null() || out.is_null() || !out.is_aligned() {
+    let dirs = [p1, p2];
+    // SAFETY: path/output contract is identical; local array lives through the call.
+    unsafe { ofe_v2_create_roster(dirs.as_ptr(), 2, 0, out) }
+}
+
+/// Create a duel (0), team (1), free-for-all (2), or training (3) match.
+/// # Safety
+/// dirs contains count live NUL-terminated UTF-8 path pointers; out is exclusive token storage.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ofe_v2_create_roster(
+    dirs: *const *const c_char,
+    count: u32,
+    mode: u32,
+    out: *mut u64,
+) -> i32 {
+    if !matches!(count, 2 | 4)
+        || dirs.is_null()
+        || !dirs.is_aligned()
+        || out.is_null()
+        || !out.is_aligned()
+    {
         return INVALID_ARGUMENT;
     }
     guarded(|| {
-        // SAFETY: paths stay valid throughout this call.
-        let a = unsafe { CStr::from_ptr(p1) }
-            .to_str()
-            .map_err(|_| INVALID_ARGUMENT)?;
-        let b = unsafe { CStr::from_ptr(p2) }
-            .to_str()
-            .map_err(|_| INVALID_ARGUMENT)?;
-        if a.is_empty() || b.is_empty() {
-            return Err(INVALID_ARGUMENT);
+        // SAFETY: bounded, aligned array is readable for the duration of this call.
+        let raw = unsafe { std::slice::from_raw_parts(dirs, count as usize) };
+        let mut paths = Vec::with_capacity(raw.len());
+        for &ptr in raw {
+            if ptr.is_null() {
+                return Err(INVALID_ARGUMENT);
+            }
+            // SAFETY: caller supplies NUL-terminated strings.
+            let path = unsafe { CStr::from_ptr(ptr) }
+                .to_str()
+                .map_err(|_| INVALID_ARGUMENT)?;
+            if path.is_empty() {
+                return Err(INVALID_ARGUMENT);
+            }
+            paths.push(Path::new(path));
         }
-        let instance = Match::open(Path::new(a), Path::new(b))?;
+        let instance = Match::open(&paths, mode)?;
         let mut registry = MATCHES.lock().map_err(|_| INTERNAL)?;
         let count = registry
             .count
@@ -290,7 +426,46 @@ pub extern "C" fn ofe_v2_step(handle: u64, frame: u64, p1: u32, p2: u32) -> i32 
             .active
             .get_mut(&handle)
             .ok_or(INVALID_HANDLE)?
-            .step(frame, p1, p2)
+            .step(frame, &[p1, p2])
+    })
+}
+
+/// Advance every slot in one atomic tick.
+/// # Safety
+/// masks contains count aligned, readable u32 values.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ofe_v2_step_roster(
+    handle: u64,
+    frame: u64,
+    masks: *const u32,
+    count: u32,
+) -> i32 {
+    if !matches!(count, 2 | 4) || masks.is_null() || !masks.is_aligned() {
+        return INVALID_ARGUMENT;
+    }
+    guarded(|| {
+        // SAFETY: checked length and alignment; caller guarantees readable storage.
+        let inputs = unsafe { std::slice::from_raw_parts(masks, count as usize) };
+        MATCHES
+            .lock()
+            .map_err(|_| INTERNAL)?
+            .active
+            .get_mut(&handle)
+            .ok_or(INVALID_HANDLE)?
+            .step(frame, inputs)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn ofe_v2_set_infinite_health(handle: u64, enabled: u32) -> i32 {
+    guarded(|| {
+        let mut registry = MATCHES.lock().map_err(|_| INTERNAL)?;
+        let instance = registry.active.get_mut(&handle).ok_or(INVALID_HANDLE)?;
+        if enabled > 1 || !instance.training {
+            return Err(INVALID_ARGUMENT);
+        }
+        instance.arena.set_infinite_health(enabled != 0);
+        Ok(())
     })
 }
 
@@ -379,6 +554,61 @@ mod tests {
             );
             bytes
         }
+    }
+
+    #[test]
+    fn roster_rejects_partial_ticks_and_training_keeps_native_health() {
+        let amber = fixture("amber");
+        let indigo = fixture("indigo");
+        let dirs = [
+            amber.as_ptr(),
+            indigo.as_ptr(),
+            amber.as_ptr(),
+            indigo.as_ptr(),
+        ];
+        let mut token = 0;
+        // SAFETY: arrays, C strings and token storage live through each call.
+        unsafe {
+            assert_eq!(
+                ofe_v2_create_roster(dirs.as_ptr(), 2, 1, &mut token),
+                INVALID_ARGUMENT
+            );
+            for (mode, teams) in [(1, [1, 1, 2, 2]), (2, [1, 2, 3, 4])] {
+                assert_eq!(ofe_v2_create_roster(dirs.as_ptr(), 4, mode, &mut token), OK);
+                let bytes = snapshot(token);
+                let initial: Value = serde_json::from_slice(&bytes).unwrap();
+                for (i, team) in teams.iter().enumerate() {
+                    assert_eq!(initial["fighters"][i]["team"], *team);
+                }
+                assert_eq!(ofe_v2_set_infinite_health(token, 1), INVALID_ARGUMENT);
+                assert_eq!(ofe_v2_step(token, 1, 0, 0), INVALID_ARGUMENT);
+                assert_eq!(
+                    ofe_v2_step_roster(token, 1, [0, 0, 0, 128].as_ptr(), 4),
+                    INVALID_ARGUMENT
+                );
+                assert_eq!(snapshot(token), bytes);
+                assert_eq!(ofe_v2_step_roster(token, 1, [0, 0, 0, 0].as_ptr(), 4), OK);
+                assert_eq!(ofe_v2_destroy(token), OK);
+            }
+            assert_eq!(ofe_v2_create_roster(dirs.as_ptr(), 2, 3, &mut token), OK);
+        }
+        assert_eq!(ofe_v2_set_infinite_health(token, 1), OK);
+        assert_eq!(ofe_v2_step(token, 1, 16, 0), OK);
+        assert_eq!(ofe_v2_step(token, 2, 0, 0), OK);
+        let state: Value = serde_json::from_slice(&snapshot(token)).unwrap();
+        assert_eq!(state["fighters"][1]["hp"], 75);
+        assert_eq!(state["fighters"][1]["state"], "Hitstun");
+        assert_eq!(state["fighters"][0]["move_id"], "tap");
+        assert_eq!(state["fighters"][0]["combo"], 1);
+        assert_eq!(state["fighters"][0]["damage"], 15);
+        assert!(
+            state["fighters"][0]["boxes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|b| b["kind"] == "hit")
+        );
+        assert_eq!(ofe_v2_destroy(token), OK);
     }
 
     #[test]

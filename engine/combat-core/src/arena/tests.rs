@@ -49,6 +49,7 @@ fn roster(kind: MoveKind) -> ArenaConfig {
                 cancels: vec![],
                 armor: 0,
                 invulnerability: 0,
+                launch_speed: 0,
                 energy_cost: 3,
             }],
             initial_energy: 6,
@@ -237,4 +238,27 @@ fn idle_fast_path_validates_neutral_inputs_and_advances_hidden_cooldown() {
     assert_eq!(arena.fighters()[0].fighter.position.z, 1000);
     arena.step(5, &[switch]).unwrap();
     assert_eq!(arena.fighters()[0].fighter.position.z, 0);
+}
+
+#[test]
+fn rising_move_applies_authored_velocity_then_gravity_and_lands() {
+    let mut config = roster(MoveKind::Strike);
+    config.fighters[0].moves[0].launch_speed = 2;
+    let mut arena = Arena::new(config).unwrap();
+    arena
+        .step(
+            1,
+            &[Command {
+                id: 1,
+                move_index: Some(0),
+                ..Default::default()
+            }],
+        )
+        .unwrap();
+    assert_eq!(arena.fighters()[0].fighter.state, State::Attack);
+    assert_eq!(arena.fighters()[0].fighter.position.h, 2);
+    for (frame, height) in [(2, 3), (3, 3), (4, 2), (5, 0)] {
+        arena.step(frame, &[]).unwrap();
+        assert_eq!(arena.fighters()[0].fighter.position.h, height);
+    }
 }

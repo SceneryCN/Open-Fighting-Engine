@@ -49,6 +49,8 @@ pub struct MoveConfig {
     pub armor: u32,
     /// Initial action ticks immune to contact.
     pub invulnerability: u32,
+    /// Initial upward velocity imparted to the actor when this action starts.
+    pub launch_speed: i32,
     /// Energy spent at the beginning of the action.
     pub energy_cost: i32,
 }

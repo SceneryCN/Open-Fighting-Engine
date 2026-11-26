@@ -49,6 +49,7 @@ fn fighter(files: Files, movement: Movement) -> Result<FighterConfig, String> {
     if normal.hitstop != 0
         || normal.armor != 0
         || normal.energy_cost != 0
+        || normal.launch_speed != 0
         || normal.invulnerability != 0
         || !normal.cancels.is_empty()
     {

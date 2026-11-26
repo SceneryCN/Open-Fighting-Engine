@@ -11,7 +11,8 @@ impl Rect {
         self.width > 0 && self.height > 0
     }
 
-    pub(super) fn bounds(self, owner: Fighter) -> [i64; 4] {
+    /// World-space edges [left, right, bottom, top] used in collision checks.
+    pub fn bounds(self, owner: Fighter) -> [i64; 4] {
         // Intermediate geometry can extend past the representable center coordinates.
         let origin = i64::from(owner.position.x);
         let x = i64::from(self.x);

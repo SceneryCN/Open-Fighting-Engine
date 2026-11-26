@@ -11,6 +11,12 @@ extern "C" {
  * Buffers are caller-owned, suitably aligned, exclusive and non-overlapping.
  * A v2 token cannot be used by v1. The caller orders operations on a match. */
 int32_t ofe_v2_create(const char *p1_dir, const char *p2_dir, uint64_t *out);
+/* P5 mode: 0 duel (2), 1 team (4), 2 free-for-all (4), 3 training (2).
+ * Caller retains all arrays; IDs follow array order starting at one. */
+int32_t ofe_v2_create_roster(const char *const *dirs, uint32_t count, uint32_t mode, uint64_t *out);
+int32_t ofe_v2_step_roster(uint64_t handle, uint64_t frame, const uint32_t *masks, uint32_t count);
+/* Enabled is 0 or 1. Valid only on training handles. */
+int32_t ofe_v2_set_infinite_health(uint64_t handle, uint32_t enabled);
 int32_t ofe_v2_destroy(uint64_t handle);
 /* Bits 0..6: left/right/jump/lane/attack/guard/dash. Bits 8..23 hold an
  * explicit zero-based move index PLUS ONE. Other bits must be zero. */
