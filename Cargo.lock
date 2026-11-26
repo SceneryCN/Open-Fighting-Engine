@@ -221,6 +221,7 @@ dependencies = [
 name = "ofe-sim"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "ofe-combat-core",
  "serde",
  "serde_json",
