@@ -1,0 +1,17 @@
+config_version=5
+
+[application]
+config/name="OFE · Bridge Proof"
+run/main_scene="res://proof.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+window/size/viewport_width=640
+window/size/viewport_height=360
+
+[physics]
+common/physics_ticks_per_second=60
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.04, 0.06, 0.09, 1)

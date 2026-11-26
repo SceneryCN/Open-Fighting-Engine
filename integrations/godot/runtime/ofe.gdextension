@@ -1,0 +1,8 @@
+[configuration]
+entry_symbol = "ofe_godot_init"
+compatibility_minimum = "4.7"
+
+[libraries]
+macos = "res://bin/libofe_godot.dylib"
+linux.x86_64 = "res://bin/libofe_godot.so"
+windows.x86_64 = "res://bin/ofe_godot.dll"
