@@ -29,3 +29,34 @@ python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/amber/manifest
 python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/indigo/manifest.json
 cargo test --locked -p ofe-sim
 ```
+
+## P2 四人对战
+
+每行依次输入 P1、P2、P3、P4 四个动作。2v2 由 P1 与 P2 对阵 P3 与 P4；ffa 为四人自由混战。默认输入源为键盘，也可重放同一个文本脚本。运行时打印每名角色的队号、生命、能量、状态、位置、朝向、招式索引、连击数、剩余 hitstop 和冲刺状态，同时列出场上投射物及帧事件。
+
+```sh
+cargo run --locked -p ofe-sim -- --mode 2v2
+cargo run --locked -p ofe-sim -- --mode ffa --script tools/ofe-sim/fixtures/arena.frames
+cargo run --locked -p ofe-sim -- --mode 2v2 --script tools/ofe-sim/fixtures/arena.frames
+```
+
+|四人输入|动作|
+|---|---|
+|L、R、J、S、G、-|移动、跳跃、切线、防御、中立，含义与双人控制相同|
+|D|冲刺，可与 L 或 R 组合指定方向|
+|A 或 0|普通打击 jab|
+|1|多段 flurry，可在命中后取消至招式 4|
+|2|投技 grab|
+|3|投射物 bolt|
+|4|消耗 20 能量的超必杀 nova|
+|5|带两次护甲的 brace|
+|6|启动期间有两帧无敌的 slip|
+
+例如输入 `1 - - G` 发起多段攻击，P4 保持防御。后续每行继续分别指定四名角色的动作，输入 `4 - - G` 可在首段已命中且取消窗口开放时追击。每个槽位同一帧最多请求一个招式。多个事件在同一个 frame 标题下出现时，由核心统一结算。
+
+四个槽位共用原创新建的 OFC 1.0 技术角色 arena_probe。manifest 的 moves 顺序定义数字键索引；OFC 各招式文件提供帧数、伤害、格挡硬直、击停、护甲、无敌、能量消耗及取消窗口。配套 move_profile.json 按 OFC 招式 ID 标注窗口、取消目标、投射物速度和寿命。arena_scene.json 选择本地 manifest 与 profile，并提供队号、出生点、移动参数和初始能量。以相同输入比较两个模式时，双方距离相同，队友保护与最近敌方选择可能改变命中对象。
+
+```sh
+python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/manifest.json
+cargo test --locked -p ofe-sim
+```
