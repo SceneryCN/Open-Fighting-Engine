@@ -4,7 +4,9 @@ extends SceneTree
 # Measure draws and main-thread simulation of the shipped four-fighter scene.
 const WARMUP := 120
 const SAMPLES := 600
+var game
 var arena
+var training := false
 var physics_ticks := 0
 var frames := 0
 var last_draw := 0
@@ -26,10 +28,15 @@ func _start() -> void:
 		printerr("Graphical display required")
 		quit(1)
 		return
-	arena = load("res://demo/arena.tscn").instantiate()
-	arena.mode = "ffa"
-	arena.roster = PackedStringArray(["amber", "indigo", "amber", "indigo"])
-	root.add_child(arena)
+	training = "--training" in OS.get_cmdline_user_args()
+	game = load("res://demo.tscn").instantiate()
+	root.add_child(game)
+	game._choose_mode("training" if training else "ffa")
+	game._versus()
+	game._fight()
+	arena = game.arena
+	if training:
+		arena._training_action(1)
 	if arena.current.get("status", -1) != 0:
 		quit(1)
 		return
@@ -46,7 +53,7 @@ func _before() -> void:
 	for event in arena.current.events:
 		if event.kind == "Started":
 			attacks += 1
-	for slot in range(1, 5):
+	for slot in range(1, 2 if training else 5):
 		var phase := (physics_ticks + slot * 9) % 48
 		for binding in [["attack", phase == 8], ["guard", phase < 7 or (phase >= 12 and phase < 37)], ["lane", phase == 40]]:
 			var action := StringName("p%d_%s" % [slot, binding[0]])
@@ -83,8 +90,14 @@ func _drawn() -> void:
 	draw_us.sort()
 	cpu_us.sort()
 	print(JSON.stringify({"display":DisplayServer.get_name(), "renderer":RenderingServer.get_current_rendering_method(),
-		"samples":SAMPLES, "physics_samples":cpu_us.size(), "frame":arena.current.frame,
+		"mode":arena.mode, "samples":SAMPLES, "physics_samples":cpu_us.size(), "frame":arena.current.frame,
 		"fps":1000000.0*SAMPLES/total, "draw_p95_us":draw_us[569], "draw_p99_us":draw_us[593],
 		"draw_max_us":draw_us[-1], "over_25ms":late, "physics_p99_us":cpu_us[ceili(cpu_us.size()*0.99)-1],
 		"physics_max_us":cpu_us[-1], "actions_started":attacks}))
-	quit(0 if attacks > 0 and arena.current.frame >= SAMPLES else 1)
+	RenderingServer.frame_post_draw.disconnect(_drawn)
+	physics_frame.disconnect(_before)
+	call_deferred("_finish", 0 if attacks > 0 and arena.current.frame >= SAMPLES else 1)
+
+func _finish(code: int) -> void:
+	await game.stop_audio()
+	quit(code)

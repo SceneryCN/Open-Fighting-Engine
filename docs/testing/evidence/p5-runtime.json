@@ -1,0 +1,108 @@
+{
+  "host": "Apple M1 Max",
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "cap_fps": 60,
+  "warmup_rendered_frames": 120,
+  "scenario": "960x540, demo menu to arena with looping music, staggered guard/attack/lane inputs; training additionally shows collision boxes",
+  "graphical_runs": [
+    {
+      "actions_started": 54,
+      "display": "macOS",
+      "draw_max_us": 23186,
+      "draw_p95_us": 20087,
+      "draw_p99_us": 22006,
+      "fps": 60.0230428461486,
+      "frame": 731.0,
+      "mode": "ffa",
+      "over_25ms": 0,
+      "physics_max_us": 4417,
+      "physics_p99_us": 2533,
+      "physics_samples": 600,
+      "renderer": "gl_compatibility",
+      "samples": 600
+    },
+    {
+      "actions_started": 54,
+      "display": "macOS",
+      "draw_max_us": 34232,
+      "draw_p95_us": 17578,
+      "draw_p99_us": 18553,
+      "fps": 60.0037202306543,
+      "frame": 731.0,
+      "mode": "ffa",
+      "over_25ms": 1,
+      "physics_max_us": 276,
+      "physics_p99_us": 271,
+      "physics_samples": 600,
+      "renderer": "gl_compatibility",
+      "samples": 600
+    },
+    {
+      "actions_started": 15,
+      "display": "macOS",
+      "draw_max_us": 21826,
+      "draw_p95_us": 20394,
+      "draw_p99_us": 21029,
+      "fps": 59.9981820550837,
+      "frame": 732.0,
+      "mode": "training",
+      "over_25ms": 0,
+      "physics_max_us": 550,
+      "physics_p99_us": 506,
+      "physics_samples": 600,
+      "renderer": "gl_compatibility",
+      "samples": 600
+    }
+  ],
+  "rules": [
+    {
+      "frame": 116.0,
+      "friendly": 0,
+      "hits": 14,
+      "mode": "team",
+      "result": "Team 1 wins",
+      "screen": "result"
+    },
+    {
+      "frame": 160.0,
+      "friendly": 0,
+      "hits": 21,
+      "mode": "ffa",
+      "result": "P1  \u00b7  Amber wins",
+      "screen": "result"
+    }
+  ],
+  "character_actions": [
+    {
+      "cancel": true,
+      "hit": true,
+      "projectile": false,
+      "reach": 4,
+      "rise": true,
+      "slot": 0,
+      "super": true
+    },
+    {
+      "cancel": true,
+      "hit": true,
+      "projectile": true,
+      "reach": 6,
+      "rise": false,
+      "slot": 1,
+      "super": true
+    }
+  ],
+  "training_record_replay": {
+    "frozen_at_end": true,
+    "matched": true,
+    "playback_stopped": true,
+    "recorded": 36000,
+    "replayed": 36000.0,
+    "sampled_exact_snapshots": [
+      1,
+      1800,
+      18000,
+      36000
+    ]
+  }
+}
