@@ -1,0 +1,14 @@
+Benchmarking p0/submit_step_event
+Benchmarking p0/submit_step_event: Warming up for 1.0000 s
+Benchmarking p0/submit_step_event: Collecting 20 samples in estimated 2.0000 s (669M iterations)
+Benchmarking p0/submit_step_event: Analyzing
+p0/submit_step_event    time:   [2.8967 ns 2.9071 ns 2.9193 ns]
+
+Benchmarking p0/snapshot_hash
+Benchmarking p0/snapshot_hash: Warming up for 1.0000 s
+Benchmarking p0/snapshot_hash: Collecting 20 samples in estimated 2.0000 s (216M iterations)
+Benchmarking p0/snapshot_hash: Analyzing
+p0/snapshot_hash        time:   [9.4221 ns 9.9720 ns 10.994 ns]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+

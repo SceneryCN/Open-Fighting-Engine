@@ -63,3 +63,5 @@ Rust 正常构建仅使用标准库与本仓库的 ofe-combat-core。Criterion �
 |[zerocopy 0.8.66](https://crates.io/crates/zerocopy/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
 |[zerocopy-derive 0.8.66](https://crates.io/crates/zerocopy-derive/0.8.66)|BSD-2-Clause OR Apache-2.0 OR MIT|
 |[zmij 1.0.23](https://crates.io/crates/zmij/1.0.23)|MIT|
+
+Python 校验器及所有间接依赖的版本、源站与再分发条件见 [格式工具依赖初审](docs/formats/validator-dependencies.md)。
