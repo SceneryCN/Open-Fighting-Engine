@@ -1,0 +1,123 @@
+{
+  "host": "macOS 27.3 arm64 Apple M1 Max",
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "smoke": {
+    "editor": {
+      "frames": 25,
+      "final_hash": "37639bfe3db9acfd"
+    },
+    "release": {
+      "frames": 25,
+      "final_hash": "37639bfe3db9acfd"
+    },
+    "corrupt_frame": 7,
+    "previous_recording_replayed": true
+  },
+  "canonical_fixture": {
+    "mode": "ffa",
+    "seed": "18446744073709551615",
+    "script": "tools/ofe-sim/fixtures/arena.frames",
+    "frames": 22,
+    "initial_hash": "b0fff557443b6004",
+    "frame_hashes": {
+      "1": "d6010b61913fcb1b",
+      "3": "0e0ab11308986203",
+      "9": "68926f47c617e146",
+      "22": "78b3a389c0be7054"
+    }
+  },
+  "release_core": {
+    "frames": 6000,
+    "roster": 4,
+    "max_serialized_checkpoint_bytes": 11926,
+    "owned_checkpoint_bytes_one_projectile": 5488,
+    "repeated_checkpoint_drop": 1000,
+    "timing_fields": [
+      "median_us",
+      "p99_us",
+      "max_us"
+    ],
+    "step": [
+      0.125,
+      0.625,
+      6.042
+    ],
+    "checkpoint_and_json": [
+      14.125,
+      19.75,
+      390.583
+    ],
+    "decode_and_restore": [
+      41.709,
+      55.541,
+      238.166
+    ],
+    "replay_step_and_hash": [
+      2.125,
+      3.875,
+      17.541
+    ]
+  },
+  "graphics": {
+    "renderer": "gl_compatibility",
+    "warmup_draws": 120,
+    "fps_cap": 60,
+    "runs": [
+      {
+        "actions_started": 15,
+        "display": "macOS",
+        "draw_max_us": 24197,
+        "draw_p95_us": 19723,
+        "draw_p99_us": 21930,
+        "fps": 60.0207011398231,
+        "frame": 731.0,
+        "mode": "training",
+        "over_25ms": 0,
+        "physics_max_us": 3090,
+        "physics_p99_us": 2227,
+        "physics_samples": 600,
+        "renderer": "gl_compatibility",
+        "samples": 600,
+        "tape": "record"
+      },
+      {
+        "actions_started": 16,
+        "display": "macOS",
+        "draw_max_us": 31487,
+        "draw_p95_us": 18730,
+        "draw_p99_us": 20474,
+        "fps": 60.0017760525712,
+        "frame": 733.0,
+        "mode": "training",
+        "over_25ms": 1,
+        "physics_max_us": 3064,
+        "physics_p99_us": 1394,
+        "physics_samples": 600,
+        "renderer": "gl_compatibility",
+        "samples": 600,
+        "tape": "replay"
+      }
+    ]
+  },
+  "full_tape": {
+    "frames": 36000,
+    "bytes": 10898446,
+    "end_snapshot_equal": true,
+    "background_io": {
+      "frames": 36000,
+      "load": {
+        "dispatch_us": 123,
+        "draws": 5,
+        "elapsed_us": 83712,
+        "max_interval_us": 18315
+      },
+      "message": "Replay saved  ·  ofe-p6-qa-full.ofr",
+      "save": {
+        "dispatch_us": 45,
+        "draws": 3,
+        "elapsed_us": 52929,
+        "max_interval_us": 20396
+      }
+    }
+  }
+}
