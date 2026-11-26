@@ -1,4 +1,4 @@
-name: P0
+name: OFE desktop CI
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
@@ -15,6 +15,8 @@ jobs:
           clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c tests/integration/*.cpp
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/formats -v
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/amber/manifest.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/indigo/manifest.json
       - run: |
           rustup show
           cargo fmt --all -- --check
@@ -39,6 +41,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Run P1 duel and package simulator
+        shell: bash
+        run: |
+          cargo test --locked -p ofe-combat-core -p ofe-sim
+          cargo build --locked --release -p ofe-sim
+          suffix=""
+          if [[ "$RUNNER_OS" == Windows ]]; then suffix=".exe"; fi
+          sim="ofe-sim$suffix"
+          "target/release/$sim" --script tools/ofe-sim/fixtures/duel.frames
+          mkdir -p build
+          tar -czf build/ofe-sim.tar.gz -C "$PWD/target/release" "$sim" -C "$PWD/tools/ofe-sim/fixtures" duel.frames
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ofe-sim-${{ matrix.id }}
+          path: build/ofe-sim.tar.gz
       - name: Build and install bridge
         run: |
           cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release

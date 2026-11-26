@@ -1,6 +1,12 @@
 # Open Fighting Engine
 
-OFE 是一套面向离线 2D 双线格斗的开源引擎。当前 P0 工程提供独立 Rust 模拟核心、带版本的 C ABI、C++ GDExtension 和一个可运行的 Godot 技术样例。在样例中按左右方向键，Rust 每个固定帧接收一次输入并更新 X 坐标；Godot 将读回的位置画成圆点。
+OFE 是面向离线 2D 双线格斗的开源引擎。P1 提供独立的 Rust 双人格斗核心和逐帧终端模拟器。运行内置对局脚本可以看到双方的动作、坐标、生命和战斗事件。
+
+```sh
+cargo run --locked -p ofe-sim -- --script tools/ofe-sim/fixtures/duel.frames
+```
+
+交互对战使用 `cargo run --locked -p ofe-sim`。每行输入双方各自的动作，例如 `A G` 表示玩家一发起普攻、玩家二保持防御。连续输入 `- G` 可观察攻击进入有效帧后的格挡结果。[操作与样例数据](tools/ofe-sim/README.md) · [双人核心接口](docs/architecture/ADR-004.md)
 
 ## 从哪里开始
 
@@ -13,13 +19,14 @@ OFE 是一套面向离线 2D 双线格斗的开源引擎。当前 P0 工程提�
 
 |路径|职责|
 |---|---|
-|engine/combat-core|60 Hz 帧推进、整数位置、编号输入、移动事件与状态快照|
+|engine/combat-core|60 Hz 帧推进、X/Z/H、双人状态机、判定框与战斗结算；兼容 P0 单实体快照接口|
 |integrations/godot/bridge|Rust C ABI v1、句柄注册表与调用方缓冲区|
 |integrations/godot/extension|C++ 类型适配、对象注册与生命周期|
 |integrations/godot/runtime|技术验证场景、输入采集和 2D 表现|
 |formats、tools/ofe-validator|四套 Draft 2020-12 Schema 与本地资源引用校验|
+|tools/ofe-sim|读取两份内置 OFC 样例，将玩家输入提交给双人核心|
 |tests、scripts|格式样例、跨语言回归与可重复构建验证|
 
-[项目总任务书 V1.0](docs/governance/PROJECT_CHARTER_V1.0.md) 是项目唯一总纲。P0 的工作顺序和签收责任见[实施方案](docs/development/P0_PLAN.md)。[项目状态](PROJECT_STATUS.md)、[交付报告](DELIVERY_REPORT.md)和[独立验收报告](P0_ACCEPTANCE_REPORT.md)分别记录进度、证据和签收条件。负责人确认 P0 通过后，才能启动 P1。
+[项目总任务书 V1.0](docs/governance/PROJECT_CHARTER_V1.0.md) 是项目唯一总纲。P0 已签收。[P1 实施方案](docs/p1/PLAN.md)、[项目状态](PROJECT_STATUS.md)和[交付报告](DELIVERY_REPORT.md)记录本阶段的范围与验证结果。
 
 源代码和数据按模块许可。分发前查看[许可证分配](LICENSE)、[依赖清单](DEPENDENCIES.md)及[许可初审](LICENSE_AUDIT.md)。
