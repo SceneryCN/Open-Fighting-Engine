@@ -1,7 +1,8 @@
-"""Import and run the P0 scene (or test its exported executable) with a timeout."""
+"""Import and run the P0 and P4 scenes (or test its exported executable) with a timeout."""
 import argparse
 from pathlib import Path
 import plistlib
+import shutil
 import subprocess
 import sys
 
@@ -37,4 +38,7 @@ if __name__ == "__main__":
         run(base + ["--editor", "--import"])
         run(base + ["--script", str(Path(__file__).with_name("scene_reentry.gd").resolve())],
             marker="OFE_REENTRY_PASS")
+        run([sys.executable, str(Path(__file__).with_name("p4_external.py")),
+             str(Path(shutil.which(args.godot) or args.godot).resolve())], marker="OFE_P4_EXTERNAL_PASS")
     run(base + ["--", "--p0-test"], marker="OFE_P0_PASS")
+    run(base + ["--", "--p4-test"], marker="OFE_P4_PASS")

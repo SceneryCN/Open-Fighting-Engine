@@ -70,6 +70,11 @@ if(BUILD_TESTING)
     add_executable(abi_smoke tests/integration/abi_smoke.c)
     target_link_libraries(abi_smoke PRIVATE ofe_rust)
     add_test(NAME abi_smoke COMMAND abi_smoke)
+    add_executable(match_abi tests/integration/match_abi.c)
+    target_link_libraries(match_abi PRIVATE ofe_rust)
+    add_test(NAME match_abi COMMAND match_abi
+        "${CMAKE_SOURCE_DIR}/tools/ofe-sim/fixtures/amber"
+        "${CMAKE_SOURCE_DIR}/tools/ofe-sim/fixtures/indigo")
     find_package(Threads REQUIRED)
     add_executable(concurrent_abi tests/integration/concurrent_abi.cpp)
     target_compile_features(concurrent_abi PRIVATE cxx_std_17)
