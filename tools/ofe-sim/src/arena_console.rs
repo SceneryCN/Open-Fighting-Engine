@@ -1,11 +1,21 @@
 // SPDX-License-Identifier: MPL-2.0
-use ofe_combat_core::arena::{Arena, Command};
+use ofe_combat_core::arena::{Arena, ArenaConfig, Command};
 use ofe_sim::{ArenaMode, sample_arena_config};
 use std::io::BufRead;
 
 pub(crate) const USAGE: &str = "ofe-sim --mode 2v2|ffa [--script FILE]\nEach frame: P1 P2 P3 P4. - neutral, L/R walk, J jump, S switch lane, G guard, D dash. A or 0 jab, 1 flurry, 2 throw, 3 projectile, 4 super, 5 armor, 6 invulnerable strike. Example: 1 G - -";
 
 fn parse(id: u32, token: &str) -> Result<Command, String> {
+    if let Some(index) = token.strip_prefix('@') {
+        let index = index
+            .parse::<usize>()
+            .map_err(|_| format!("invalid move index in {token:?}"))?;
+        return Ok(Command {
+            id,
+            move_index: Some(index),
+            ..Command::default()
+        });
+    }
     let mut dash = false;
     let mut move_index = None;
     let mut base = String::new();
@@ -64,8 +74,11 @@ fn print_arena(arena: &Arena) {
 }
 
 pub(crate) fn run(input: impl BufRead, mode: ArenaMode) -> Result<(), String> {
-    let mut arena =
-        Arena::new(sample_arena_config(mode)?).map_err(|e| format!("initialization: {e:?}"))?;
+    run_config(input, sample_arena_config(mode)?)
+}
+
+pub(crate) fn run_config(input: impl BufRead, config: ArenaConfig) -> Result<(), String> {
+    let mut arena = Arena::new(config).map_err(|e| format!("initialization: {e:?}"))?;
     print_arena(&arena);
     for (i, line) in input.lines().enumerate() {
         let n = i + 1;
@@ -80,7 +93,11 @@ pub(crate) fn run(input: impl BufRead, mode: ArenaMode) -> Result<(), String> {
             continue;
         }
         if words.len() != arena.fighters().len() {
-            return Err(format!("line {n}: expected P1 P2 P3 P4"));
+            let players = (1..=arena.fighters().len())
+                .map(|i| format!("P{i}"))
+                .collect::<Vec<_>>()
+                .join(" ");
+            return Err(format!("line {n}: expected {players}"));
         }
         let commands = arena
             .fighters()

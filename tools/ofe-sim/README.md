@@ -63,3 +63,9 @@ python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/manifest
 python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/arena/move_profile.json
 cargo test --locked -p ofe-sim
 ```
+
+## 外部角色
+
+在仓库根执行 `cargo run --locked -p ofe-sim -- --character tools/ofe-sim/fixtures/arena`，可用该目录中的角色创建镜像对战。每行两列输入分别控制双方，A 使用 manifest.moves 中的首个动作，@N 选择从零开始的招式索引（例如 `@3 -` 施放夹具的投射物）。输入脚本可通过 `--script FILE` 提供。位置与移动参数来自默认对战场景，初始能量受角色的 max_energy 限制。
+
+角色目录在启动时读取。可修改属性或招式后重跑同一可执行文件。现有 Arena 配置接收一个共享攻击框与一个受击框，外部对战入口在几何不明确时报告错误。角色层仍可读取包含其他框组、多个几何框或仅用于展示的角色包。带取消窗口的动作需要根目录中的 move_profile.json 提供目标。
