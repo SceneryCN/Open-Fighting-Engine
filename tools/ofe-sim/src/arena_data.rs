@@ -126,52 +126,9 @@ pub fn sample_arena_config(mode: ArenaMode) -> Result<ArenaConfig, String> {
 /// Build a mirror match from external OFC data and the bundled duel's motion settings.
 pub fn external_arena_config(root: &Path) -> Result<ArenaConfig, String> {
     let character = Character::load(root)?;
-    let moves = character.combat.combat_moves()?;
-    let hurtbox = character.combat.rectangle("hurt")?;
-    let scene: Scene =
-        serde_json::from_str(include_str!("../fixtures/scene.json")).map_err(|e| e.to_string())?;
-    let advanced: ArenaScene = serde_json::from_str(include_str!("../fixtures/arena_scene.json"))
-        .map_err(|e| e.to_string())?;
-    let attributes = character.combat.attributes;
-    let fighters = scene
-        .fighters
-        .into_iter()
-        .enumerate()
-        .map(|(i, m)| {
-            let id = i as u32 + 1;
-            CombatantConfig {
-                id,
-                team: id,
-                base: FighterConfig {
-                    spawn: Position {
-                        x: m.spawn.x,
-                        z: m.spawn.z,
-                        h: m.spawn.h,
-                    },
-                    max_health: attributes.max_health,
-                    walk_speed: m.walk_speed,
-                    jump_speed: m.jump_speed,
-                    gravity: m.gravity,
-                    hurtbox,
-                    attack: moves[0].base,
-                },
-                moves: moves.clone(),
-                dash_speed: advanced.dash_speed,
-                dash_ticks: advanced.dash_ticks,
-                max_energy: attributes.max_energy,
-                initial_energy: advanced.initial_energy.min(attributes.max_energy),
-            }
-        })
-        .collect();
-    let l = scene.lane;
-    Ok(ArenaConfig {
-        fighters,
-        lane: LaneConfig {
-            startup: l.startup,
-            travel: l.travel,
-            recovery: l.recovery,
-            cooldown: l.cooldown,
-            interruptible: l.interruptible,
-        },
-    })
+    ofe_character_runtime::duel_scene::bind(
+        [&character.combat, &character.combat],
+        include_str!("../fixtures/scene.json"),
+        include_str!("../fixtures/arena_scene.json"),
+    )
 }
