@@ -1,6 +1,6 @@
 # P0 独立 QA 验收记录 · 2026-11-26
 
-**阶段状态 BLOCKED。** 唯一总纲第十七章 E8「CI 自动执行」尚缺托管运行记录。验证者为独立 QA Agent，使用 feature/qa 工作树与单独的干净 clone。项目负责人保留最终决定权。下表的「通过」表示该检查有相应的 QA 证据。
+**阶段状态 TESTING，独立 QA 建议签收，待项目负责人决定。** 首轮本地复核时 E8 因未关联远端被列为 BLOCKED。随后 main 的 push 触发托管 CI，本次追加复核确认 E8 通过。验证者为独立 QA Agent，使用 feature/qa 工作树与单独的干净 clone。项目负责人保留最终决定权。下表的「通过」表示该检查有相应的 QA 证据。
 
 ## 检查清单
 
@@ -54,7 +54,7 @@
 |E5|Linux x64 构建|通过。ELF x86-64；在 Linux amd64 容器执行官方 Godot，OFE_P0_PASS。|
 |E6|macOS ARM64 构建|通过。QA 自行在 macOS ARM64 拉取固定依赖并构建，从空缓存完成导入与执行。|
 |E7|macOS x64 构建|通过。Mach-O x86_64；Rosetta 下 x86_64 Godot 加载并执行成功。|
-|E8|CI 自动执行|**BLOCKED**。本地仓库无远端；负责人决定稍后自行关联。待真实 push/PR 触发 Actions 并归档 job 与产物证据。|
+|E8|CI 自动执行|通过。提交 1cb8609 的 push 自动触发 run 45783184524，5 个任务全部成功，列出四个平台产物。|
 |E9|构建结果|通过。核对四目标格式，记录命令和运行层级。|
 |E10|失败原因|通过。首次导入的 SIGSEGV 可复现，CMake 安装预注册并在全新 clone 复测通过。|
 |F1|依赖许可|通过初审。核对 DEPENDENCIES、Cargo.lock、Python 哈希锁及单独的 validator-dependencies。|
@@ -63,7 +63,7 @@
 |F4|架构文档|通过。模块图、数据与帧流、ABI、坐标、格式与风险均可追溯。|
 |F5|环境指南|通过。在独立 clone 验证构建、安装、headless 路径。|
 |F6|风险清单|通过。架构 overview、阶段状态以及本报告说明剩余风险。|
-|F7|交付报告|通过。已审阅 DELIVERY_REPORT.md（0cca3f2）中的运行层级、负责人权限与托管 CI 缺口。|
+|F7|交付报告|通过。首轮已审阅 DELIVERY_REPORT.md（0cca3f2）中的运行层级与负责人权限，托管 CI 后续补证见下。|
 |F8|独立 QA 报告|已出具。本文件由 QA 在独立工作树编写、保留独立执行证据。|
 
 ## 首次导入故障与复测
@@ -81,12 +81,33 @@ macOS ARM64 上，在未生成扩展注册清单的项目中，Godot 4.7.2 首�
 |Linux x64|OrbStack Linux amd64 容器|通过 / 通过，ELF x86-64|
 |Windows x64|Debian trixie amd64 容器，Wine 10.0|通过 / 通过，PE32+。ABI 和并发测试 EXE 也通过|
 
-Wine 8 的首次检验因兼容层缺少 bcryptprimitives.dll 失败。升级到独立 Wine 10 容器后原 DLL 和原 EXE 均可运行。Windows 原生内核及 Intel 实体硬件仍待对应 runner 复核。
+Wine 8 的首次检验因兼容层缺少 bcryptprimitives.dll 失败。升级到独立 Wine 10 容器后原 DLL 和原 EXE 均可运行。后续托管验证通过 Windows Server 2022 x64 与 macOS 15 Intel runner。
 
 ## 九项否决门槛
 
-已验证 Godot 调用 Rust、Core 独立、规则唯一、固定帧接口、四格式 Schema、自动化测试、四目标可执行构建流程、ABI 所有权与干净源树的实际构建。第九项的复建环境为新源目录及空 CMake 目录，复用了主机编译器、SDK 和 Cargo 下载缓存。若要证明四个干净原生 OS 镜像全部通过，还需托管 CI 证据。
+已验证 Godot 调用 Rust、Core 独立、规则唯一、固定帧接口、四格式 Schema、自动化测试、四目标可执行构建流程、ABI 所有权与干净源树的实际构建。第九项的复建环境为新源目录及空 CMake 目录，复用了主机编译器、SDK 和 Cargo 下载缓存。后续托管工作流在四种 runner 中分别检出源码、构建、运行 CTest、安装扩展、执行 Godot 场景与导出程序自检。
+
+## GitHub Actions 独立补证
+
+QA 从 GitHub 运行详情、各 job 步骤和产物列表交叉核对。提交 `1cb8609b845fa3672c5b451c93b025fd4260ad1c` 的 push 自动触发 P0 工作流，第 1 次尝试的总结果为 Success。[运行详情](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524)
+
+|验证目标|托管 runner|任务记录|
+|---|---|---|
+|macos-arm64|macos-15|[通过 · 139783380466](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524/job/139783380466)|
+|windows-x64|windows-2022|[通过 · 139783380500](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524/job/139783380500)|
+|linux-x64|ubuntu-24.04|[通过 · 139783380633](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524/job/139783380633)|
+|macos-x64|macos-15-intel|[通过 · 139783380696](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524/job/139783380696)|
+|质量检查|ubuntu-24.04|[通过 · 139783380785](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524/job/139783380785)|
+
+质量任务完成格式检查、Schema 测试、Rust 检查、单测及 nextest。四个平台任务的构建、编辑器与导出程序验证、上传步骤均成功。下表记录 GitHub 显示的压缩包大小与 SHA-256。本轮按公开元数据核对，未独立下载并重新计算归档哈希。
+
+|产物|大小|归档 SHA-256|
+|---|---:|---|
+|ofe-p0-linux-x64|28.1 MB|`b23f1ebf528b583066761fc5f5f783d0f4f01520c569672a1c212293d3ae8a73`|
+|ofe-p0-macos-arm64|27.9 MB|`7e2494cacfe2a1dfedc15fef2b0f9e24b4bf29fcc2cac3a1a632a0b06c913268`|
+|ofe-p0-macos-x64|30.7 MB|`28d9c55ab14226320608e874e4c44398cf42c6b39c6d09ea63ff4ccddfb01e3c`|
+|ofe-p0-windows-x64|36.3 MB|`39085d13aa1dd484945252ec5b15d031f05808af615243e8fb0713de0f924779`|
 
 ## 签收
 
-QA 当前建议保留 P0 阶段。补证项为托管 CI 首次自动执行及负责人签收。P1 尚未启动。
+独立 QA 建议项目负责人签收 P0。第十七章的技术检查已全部取得验证记录，原 E8 阻塞已解除。项目负责人决定是否批准本阶段；当前尚无负责人签收记录，P1 未启动。
