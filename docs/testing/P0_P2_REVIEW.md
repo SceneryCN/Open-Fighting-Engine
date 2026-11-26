@@ -15,3 +15,7 @@ godot --path integrations/godot/runtime --max-fps 60 --script "$PWD/scripts/test
 ```
 
 [复核版本及四目标 CI](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45792503484)
+
+P3 合并后，同机重新编译原生扩展并再次运行 600 帧。两项 CTest、Godot 重新入树和生命周期回归均通过。窗口 9.996687 秒推进 600 个物理 tick，平均 60.020 FPS；P50 为 16.560 ms，P95 为 20.631 ms，P99 为 22.707 ms，最慢为 25.143 ms，超过 25 ms 共 1 次。两轮均达到平均 60 FPS，个别绘制间隔仍有抖动。
+
+P3 最终集成版本再次通过七组历史状态与有序事件摘要的逐项比较，覆盖 6,000 帧持续负载、集中命中及两种失败重试。

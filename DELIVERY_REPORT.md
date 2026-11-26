@@ -9,3 +9,5 @@
 当前 Arena 的角色绑定需要一个攻击框和一个受击框；角色读取层可保留多个框组。P3 的 PNG 支持读取图像资源、帧索引、原点和图集区域。完整的 Godot 对战画面及其帧时间在 P4 验证。
 
 [独立 QA 记录](docs/testing/P3_ACCEPTANCE_REPORT.md) · [P3 四目标发布与回归](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45794232658)
+
+托管运行 45794232658 已成功。Linux x64、Windows x64、macOS ARM64 和 macOS x64 均通过真实编辑器、导出程序及外部角色发布包回归，共上传四份模拟器和四份 Godot 导出包。当前状态为 TESTING，待负责人签收。
