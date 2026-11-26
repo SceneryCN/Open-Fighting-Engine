@@ -81,7 +81,12 @@ fn airborne(f: &mut Fighter, timers: &mut Timers, gravity: i32) -> Result<(), Du
 }
 
 pub(super) fn shift(x: &mut i32, delta: i64) -> Result<(), DuelError> {
-    *x = i32::try_from(i64::from(*x) + delta).map_err(|_| DuelError::Overflow)?;
+    *x = i32::try_from(
+        i64::from(*x)
+            .checked_add(delta)
+            .ok_or(DuelError::Overflow)?,
+    )
+    .map_err(|_| DuelError::Overflow)?;
     Ok(())
 }
 
@@ -165,8 +170,20 @@ impl Timers {
             view.fighter.facing = facing;
         }
         let start = requested.filter(|&index| {
-            view.energy >= config.moves[index].energy_cost && (free && grounded || matches!(self.action,
-                Action::Attack(a) if a.confirmed && config.moves[a.index].cancels.iter().any(|c| c.into == index && c.window.contains(a.age))))
+            if view.energy < config.moves[index].energy_cost {
+                return false;
+            }
+            if free {
+                return grounded;
+            }
+            let Action::Attack(a) = self.action else {
+                return false;
+            };
+            a.confirmed
+                && config.moves[a.index]
+                    .cancels
+                    .iter()
+                    .any(|c| c.into == index && c.window.contains(a.age))
         });
         let id = view.fighter.id;
         if let Some(index) = start {
@@ -230,9 +247,13 @@ impl Timers {
                 if matches!(rules.kind, MoveKind::Projectile { .. })
                     && a.age == u64::from(first_active)
                 {
-                    effects
-                        .spawn
-                        .push((id, a.index, a.instance, f.position, f.facing));
+                    effects.spawn.push(Spawn {
+                        id,
+                        move_index: a.index,
+                        cast: a.instance,
+                        position: f.position,
+                        facing: f.facing,
+                    });
                 }
                 a.age += 1;
                 if !matches!(rules.kind, MoveKind::Projectile { .. }) {
