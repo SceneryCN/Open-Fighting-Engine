@@ -1,0 +1,29 @@
+{
+  "format": "OFA",
+  "format_version": "1.0",
+  "frames": [
+    {
+      "duration": 14,
+      "events": [],
+      "image": "assets/idle.png",
+      "origin": {
+        "x": 116,
+        "y": 247
+      }
+    },
+    {
+      "duration": 14,
+      "events": [],
+      "image": "assets/idle.png",
+      "origin": {
+        "x": 116,
+        "y": 249
+      }
+    }
+  ],
+  "id": "idle",
+  "loop": true,
+  "source": {
+    "kind": "sequence"
+  }
+}

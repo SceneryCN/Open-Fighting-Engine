@@ -1,0 +1,43 @@
+{
+  "format": "OFA",
+  "format_version": "1.0",
+  "frames": [
+    {
+      "duration": 2,
+      "events": [],
+      "index": 0,
+      "origin": {
+        "x": 116,
+        "y": 247
+      }
+    },
+    {
+      "duration": 3,
+      "events": [
+        "contact"
+      ],
+      "index": 1,
+      "origin": {
+        "x": 116,
+        "y": 247
+      }
+    },
+    {
+      "duration": 5,
+      "events": [],
+      "index": 0,
+      "origin": {
+        "x": 116,
+        "y": 247
+      }
+    }
+  ],
+  "id": "attack",
+  "loop": false,
+  "source": {
+    "columns": 2,
+    "image": "assets/rook.png",
+    "kind": "sheet",
+    "rows": 1
+  }
+}

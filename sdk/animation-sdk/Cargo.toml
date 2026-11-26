@@ -1,0 +1,11 @@
+[package]
+name = "ofe-animation-sdk"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Author OFA 1.0 animation documents for Open Fighting Engine"
+rust-version = "1.100"
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"

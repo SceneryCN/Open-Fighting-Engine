@@ -1,0 +1,16 @@
+{
+  "active": 3,
+  "armor": 0,
+  "blockstun": 3,
+  "cancel_windows": [],
+  "damage": 12,
+  "energy_cost": 0,
+  "hitstop": 1,
+  "hitstun": 6,
+  "id": "straight",
+  "invulnerability": 0,
+  "lane_rule": "SAME_LANE",
+  "pushback": 1,
+  "recovery": 5,
+  "startup": 2
+}

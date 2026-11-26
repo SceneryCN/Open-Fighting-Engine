@@ -1,0 +1,1 @@
+OFE contributors dedicate the Rook character data and art to the public domain under CC0-1.0, to the extent of their rights. Rook's jade atlas adapts the CC0 Amber sprite atlas generated for OFE P4 with OpenAI ImageGen. The idle pose is cropped from that atlas. No third-party character assets used.

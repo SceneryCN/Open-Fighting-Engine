@@ -1,0 +1,12 @@
+[workspace]
+
+[package]
+name = "rook-author"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+ofe-animation-sdk = { path = "../../sdk/animation-sdk" }
+ofe-character-sdk = { path = "../../sdk/character-sdk" }

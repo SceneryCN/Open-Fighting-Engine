@@ -1,0 +1,26 @@
+{
+  "boxes": [
+    {
+      "h": 0,
+      "height": 5,
+      "kind": "hurt",
+      "width": 2,
+      "x": -1
+    },
+    {
+      "h": 1,
+      "height": 3,
+      "kind": "hit",
+      "width": 4,
+      "x": 1
+    },
+    {
+      "h": 0,
+      "height": 3,
+      "kind": "push",
+      "width": 2,
+      "x": -1
+    }
+  ],
+  "id": "body"
+}

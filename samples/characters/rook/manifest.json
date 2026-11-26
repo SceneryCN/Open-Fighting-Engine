@@ -1,0 +1,28 @@
+{
+  "animations": [
+    "animations/idle.json",
+    "animations/attack.json"
+  ],
+  "assets": [
+    "animations/assets/idle.png",
+    "animations/assets/rook.png"
+  ],
+  "attributes": "attributes.json",
+  "author": "OFE contributors",
+  "character": "character.json",
+  "dependencies": [],
+  "format": "OFC",
+  "format_version": "1.0",
+  "hitboxes": [
+    "hitboxes/body.json"
+  ],
+  "id": "rook",
+  "license": "CC0-1.0",
+  "licenses": [
+    "licenses/notice.txt"
+  ],
+  "moves": [
+    "moves/straight.json"
+  ],
+  "sounds": []
+}
