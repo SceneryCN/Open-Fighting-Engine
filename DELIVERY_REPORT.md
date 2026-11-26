@@ -1,13 +1,19 @@
-# P4 Godot Runtime 交付报告
+# P5 Sunset Viaduct 交付报告
 
-默认主场景现在直接启动真实双人对战。Rust 管理对局并在固定 60 Hz 推进双方输入；Godot 显示 OFA 图集、角色朝向与双线位置、生命与能量，并根据命中和格挡事件播放音效。R 可重开，离树再入树会重建对局。P0 的原生 ABI 和桥接验证场景保留。[运行方法与控制](docs/p4/RUNTIME.md) · [ABI 与场景契约](docs/architecture/ADR-007.md)
+默认入口是本地示范游戏。玩家可以为每个席位选 Amber 或 Indigo，从 VS 页面进入 1V1、2V2、四人混战或训练。对战支持暂停、重赛、击倒和按队伍结算。操作说明可在主菜单和暂停菜单打开。背景音乐与命中音效有独立音量设置。[操作指南](docs/p5/PLAY.md) · [P5 任务与验收范围](docs/p5/TASK_V1.md) · [ADR-008](docs/architecture/ADR-008.md)
 
-独立外部角色用例将双方初始生命分别设为 137 和 191，第一方伤害设为 23；使用真实 Godot 输入后，第二方的 Rust 生命与画面血条均为 168。原生 ABI 测试核对了句柄隔离、调用方缓冲区边界，以及无效输入后的逐字节状态一致性。74 项 Rust 测试和 3 项 CTest 均通过。
+## 运行与回归
 
-发布包包含游戏、当前源码获取路径、OFE、Godot、godot-cpp 和 Rust 依赖的许可声明。P4 的交付边界为双人 Godot 技术场景；角色选择、VS、回合与胜负流程由 P5 负责。[托管构建与下载](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45802105150) · [P3 交付归档](docs/p3/DELIVERY_REPORT.md)
+独立 QA 从 Godot 编辑器和 macOS ARM64 导出程序进入游戏。实战中，2V2 在第 116 帧由一队获胜，记录 14 次命中、零次友伤；四人混战在第 160 帧由 Amber 获胜。两名角色的升龙或飞行道具、超必杀和取消路线均经实际输入验证。训练记录至 36,000 帧上限，回放到末帧自动冻结，四个采样帧的原生快照与录制一致。[独立 QA 记录](docs/testing/P5_ACCEPTANCE_REPORT.md) · [机器可读数据](docs/testing/evidence/p5-runtime.json)
 
-独立 QA 在 Apple M1 Max 的真实窗口测量四轮，每轮预热 120 帧后采集 600 个绘制间隔。持续攻防与每 64 tick 重开两类负载的平均值为 59.846–60.023 FPS。持续攻防的物理处理峰值为 6.645 ms；频繁重开时最高 15.576 ms。绘制间隔峰值达 60.255 ms，仍能观察到个别长帧。[详细测试与分位数](docs/testing/P4_ACCEPTANCE_REPORT.md) · [实际对战截图](docs/testing/evidence/p4-match.png)
+QA 发现的问题已修复并复测：正式角色现在有足够能量发动超必杀；从暂停返回后可继续用鼠标操作训练栏；导出程序的命中音效正确送入 SFX 总线。外部仅有普攻的角色同时收到特殊技按键时仍可继续战斗。76 项 Rust 测试、3 项 CTest 和两个正式角色包的格式校验通过。旧 P0 和 P4 验证场景继续参与编辑器与导出回归。
 
-正常启动沿用设备刷新设置，战斗时钟固定为 60 Hz。另一次不传 `--max-fps` 的本机持续攻防实测，在 5.655 秒内绘制 600 帧并推进 338 个物理 tick，平均绘制 106.11 FPS。该结果与上述明确限制绘制为 60 FPS 的四轮采样分别记录。
+## 性能与边界
 
-完整桌面 CI 已通过。Linux x64、Windows x64、macOS ARM64 和 macOS x64 的编辑器与导出程序均实际运行了对战自检，四套 ofe-runtime 归档与四套 ofe-sim 归档均已上传。P4 待项目负责人签收。
+M1 Max、Godot 4.7.2、绘制限速 60 FPS。独立 QA 从默认示范游戏进入四人战和训练，保持背景音乐播放，每轮预热 120 帧后采集 600 个绘制间隔。两轮四人战平均 60.023 / 60.004 FPS，绘制 P99 为 22.006 / 18.553 ms，最长 34.232 ms。开启碰撞框的训练场平均 59.998 FPS，最长 21.826 ms。三轮物理处理峰值为 4.417 ms，个别绘制间隔超过 16.67 ms 的单帧预算。图形性能数据仅对应这台 Mac。[四人实机画面](docs/testing/evidence/p5-ffa.png) · [训练场实机画面](docs/testing/evidence/p5-training.png)
+
+训练输入保存在当前训练场内，开始新记录将覆盖上一段。四席共享键盘的同时按键能力取决于硬件；第四位玩家的键位使用数字小键盘，亦可接入手柄。最终验收由项目负责人决定。[P4 交付归档](docs/p4/DELIVERY_REPORT.md)
+
+## 桌面构建
+
+提交 `029d5fb` 的质量检查及四组桌面构建全部通过。Linux x64、Windows x64、macOS ARM64 和 macOS x64 均在各自运行环境中构建、运行编辑器与 Release 导出自检，并上传游戏与模拟器归档。运行此提交的产物即可体验本次交付。[GitHub Actions 与四平台下载](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45816516006)
