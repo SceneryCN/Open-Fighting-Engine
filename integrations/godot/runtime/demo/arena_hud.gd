@@ -50,7 +50,7 @@ func configure(mode: String, count: int) -> void:
 	else:
 		_panel(0, 499, 960, 41, INK)
 		_label(16, 501, 928, 36, 15, HORIZONTAL_ALIGNMENT_CENTER, PAPER,
-			"P1   F / E / Q   Attack · Special · Super         P2   J / I / U   Attack · Special · Super")
+			"P1   J or O / U / I   Attack · Special · Super         P2   F / R / T   Attack · Special · Super")
 
 func _training_controls() -> void:
 	_panel(0, 92, 960, 70, Color("#192a31ed"))
