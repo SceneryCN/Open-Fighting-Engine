@@ -47,8 +47,8 @@ fn with_registry(operation: impl FnOnce(&mut Registry) -> Result<(), i32>) -> i3
 
 fn core_error(error: Error) -> i32 {
     match error {
-        Error::InvalidAxis => INVALID_ARGUMENT,
-        Error::InvalidFrame | Error::DuplicateInput => INPUT_CONFLICT,
+        Error::InvalidAxis | Error::InvalidEntity => INVALID_ARGUMENT,
+        Error::WrongFrame | Error::DuplicateInput => INPUT_CONFLICT,
         Error::Overflow => LIMIT,
     }
 }
