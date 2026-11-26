@@ -85,12 +85,25 @@ fn entry() -> Result<(), String> {
             run(io::stdin().lock())
         }
         [help] if help == "--help" || help == "-h" => {
-            println!("{USAGE}\n{}", arena_console::USAGE);
+            println!(
+                "{USAGE}\n{}\nofe-sim --character DIR [--script FILE]; @N selects a manifest move by index.",
+                arena_console::USAGE
+            );
             Ok(())
         }
         [flag, path] if flag == "--script" => {
             let file = open_script(path)?;
             run(BufReader::new(file))
+        }
+        [flag, root, rest @ ..] if flag == "--character" => {
+            let cfg = ofe_sim::external_arena_config(std::path::Path::new(root))?;
+            match rest {
+                [] => arena_console::run_config(io::stdin().lock(), cfg),
+                [flag, path] if flag == "--script" => {
+                    arena_console::run_config(BufReader::new(open_script(path)?), cfg)
+                }
+                _ => Err("usage: ofe-sim --character DIR [--script FILE]".into()),
+            }
         }
         [flag, mode, rest @ ..] if flag == "--mode" => {
             let mode = match mode.to_str() {
