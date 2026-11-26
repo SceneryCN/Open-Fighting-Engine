@@ -1,5 +1,5 @@
 # P0 工程交付报告 · 2026-11-26
-**独立 QA 已完成。阶段状态 BLOCKED，未签收。** 工作区为本地 Git monorepo。项目负责人明确要求稍后自行关联远端，当前没有 GitHub Actions run ID。托管 CI 条目为 BLOCKED，P1 为 NOT_STARTED。
+**独立 QA 已完成。阶段状态 TESTING，待项目负责人签收。** 提交 1cb8609 推送到负责人指定的远端 main 后触发托管工作流。quality 与四个桌面 proof 作业均成功，四份导出产物已上传。P1 为 NOT_STARTED。[P0 #1](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524)
 
 ## 交付范围
 - P0-01/02：初始化前核实空目录与非 Git 状态；原始任务书、架构冻结决议、Rust 1.100.0 与 Cargo.lock、CMake、Godot 4.7.2 stable 及固定 godot-cpp 已入库。[审计](docs/development/INITIAL_AUDIT.md) · [架构](docs/architecture/overview.md)
@@ -16,10 +16,10 @@
 |Linux x64|ELF x86-64|OrbStack Linux amd64 容器|通过 / 通过|
 |Windows x64|PE32+ x86-64，MinGW|Debian trixie amd64 + Wine 10|通过 / 通过|
 
-Tech Lead 在新的本地 clone 中按默认 CMake 配置从上游获取绑定，构建、CTest、安装、第一次 headless 导入和技术场景均成功。独立 QA 另行复建。Windows 原生与 Intel 硬件的执行证据尚待相应 runner。首次编辑器动态发现扩展曾在退出时产生信号 11；固定安装流程在启动前登记扩展。[ADR-003](docs/architecture/ADR-003.md)
+Tech Lead 在新的本地 clone 中按默认 CMake 配置从上游获取绑定，构建、CTest、安装、第一次 headless 导入和技术场景均成功。独立 QA 另行复建。表中为本地验证的执行环境。托管工作流另在 Windows Server、Ubuntu、macOS ARM64 和 Intel runner 上完成验证。首次编辑器动态发现扩展曾在退出时产生信号 11；固定安装流程在启动前登记扩展。[ADR-003](docs/architecture/ADR-003.md)
 
 ## 本地交付位置
 导出的四个技术样例位于 build/p0 下的 macos-arm64、macos-x64、linux-x64 与 windows-x64 目录。macOS 直接打开 OFE.app；Linux、Windows 运行 OFE 或 OFE.exe，保留同目录的扩展库和 PCK。左右方向键提交水平移动。SHA256SUMS 记录文件摘要，NOTICES 存放本地验证包的上游声明。产物由 Git 忽略，复建步骤随源码管理。逐项结论见 [独立 QA 验收报告](P0_ACCEPTANCE_REPORT.md)。
 
 ## 负责人决策与复核
-本轮遵循任务书 V1.0，接口与格式先冻结。公开接口的变更通过 ADR，重大范围调整由负责人批准。许可证沿用总纲建议，模块分配留待负责人一并确认。待关联远端后运行托管流水线，核对产物与独立报告，由负责人决定 P0 是否通过。
+本轮遵循任务书 V1.0，接口与格式先冻结。公开接口的变更通过 ADR，重大范围调整由负责人批准。许可证沿用总纲建议，模块分配留待负责人一并确认。托管运行与产物已核对，由负责人决定 P0 是否通过。

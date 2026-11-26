@@ -28,4 +28,4 @@ cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 - 首次在空缓存执行编辑器导入，Godot 4.7.2 在发现扩展后的关闭阶段崩溃（SIGSEGV）。4.5 和 4.7 两种绑定均复现。CMake 安装现在在首次启动前将扩展添加到 Godot 自身的注册文件，保留其他条目；经此路径首次导入成功。
 - 官方 macOS 模板仅包含 universal 引擎。按架构的导出预设直接请求 thin 二进制时失败。准备脚本从同一官方模板用 lipo 提取目标架构的 release 引擎；导出包保留原生架构库，应用包可实际启动。
-- Debian 12 的 Wine 8 无法提供 Rust Windows 目标需要的 bcryptprimitives.dll。Windows 原生运行和实际托管 CI 结果须单独记录。四个本地构建产物及导出文件已留存。
+- Debian 12 的 Wine 8 无法提供 Rust Windows 目标需要的 bcryptprimitives.dll。后续四目标托管实跑证据见 [P0 #1](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45783184524)。四个本地构建产物及导出文件已留存。
