@@ -6,7 +6,7 @@
 mod types;
 pub use types::*;
 
-use crate::{EntityId, Position};
+use crate::EntityId;
 
 const FAR: i32 = 1000;
 
@@ -58,7 +58,6 @@ impl FighterConfig {
             && attack.hitbox.valid()
             && attack.active > 0
             && attack.damage >= 0
-            && attack.pushback >= 0
             && !matches!(attack.lane_rule, LaneRule::DepthRange(n) if n < 0)
     }
 }
@@ -88,12 +87,9 @@ struct Timers {
     cooldown: u32,
 }
 
-fn move_x(fighter: &mut Fighter, offset: i32) -> Result<(), DuelError> {
-    fighter.position.x = fighter
-        .position
-        .x
-        .checked_add(offset)
-        .ok_or(DuelError::Overflow)?;
+fn move_x(fighter: &mut Fighter, offset: i64) -> Result<(), DuelError> {
+    let destination = i64::from(fighter.position.x) + offset;
+    fighter.position.x = i32::try_from(destination).map_err(|_| DuelError::Overflow)?;
     Ok(())
 }
 
@@ -188,7 +184,7 @@ fn advance(
             if grounded && timers.velocity == 0 && input.guard {
                 fighter.state = State::Guard;
             } else {
-                move_x(fighter, input.axis * rules.walk_speed)?;
+                move_x(fighter, i64::from(input.axis * rules.walk_speed))?;
                 let velocity = timers.velocity;
                 airborne(fighter, timers, rules.gravity)?;
                 fighter.state = if fighter.position.h > 0 {
@@ -324,9 +320,12 @@ impl Duel {
             let timer = &mut timers[j];
             if !blocked {
                 target.health = (target.health - attack.damage).max(0);
-                move_x(target, facing * attack.pushback)?;
+                move_x(target, i64::from(facing) * i64::from(attack.pushback))?;
             }
             if target.health == 0 {
+                if target.state == State::LaneSwitch {
+                    target.position.z = nearest(target.position.z);
+                }
                 target.state = State::Ko;
                 timer.action = Action::Free;
             } else if target.state == State::LaneSwitch && !self.config.lane.interruptible {
@@ -390,3 +389,6 @@ impl Duel {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests;

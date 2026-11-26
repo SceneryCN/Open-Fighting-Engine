@@ -72,7 +72,7 @@ pub struct AttackConfig {
     pub hitstun: u32,
     /// Additional ticks during which a blocking target cannot act.
     pub blockstun: u32,
-    /// Distance in the attacker's facing direction on an unblocked hit.
+    /// Signed displacement along the attacker's facing on hit. Negative values pull.
     pub pushback: i32,
     /// Local attack rectangle.
     pub hitbox: Rect,
@@ -125,42 +125,65 @@ pub struct Fighter {
 
 /// Committed action or reaction in the duel state machine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum State {
+    /// Grounded with no action.
     Idle,
+    /// Grounded with horizontal input.
     Walk,
+    /// Airborne with positive vertical displacement.
     Jump,
+    /// Airborne at the apex or descending.
     Fall,
+    /// In the startup, travel, or recovery phase of a switch.
     LaneSwitch,
+    /// In the startup, active, or recovery phase of a normal attack.
     Attack,
+    /// Grounded and holding guard.
     Guard,
+    /// Recovering from an unblocked hit.
     Hitstun,
+    /// Recovering from a blocked hit; further contacts are guarded.
     Blockstun,
+    /// Health reached zero; this state is terminal.
     Ko,
 }
 
 /// Changes committed in a tick, with simultaneous contacts ordered by attacker ID.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum Event {
+    /// Final position differs from the previous tick.
     Moved {
+        /// Affected fighter.
         id: EntityId,
+        /// Position after settlement.
         position: Position,
     },
+    /// Final state differs from the previous tick.
     StateChanged {
+        /// Affected fighter.
         id: EntityId,
+        /// State after settlement.
         state: State,
     },
+    /// An unblocked contact; damage is the configured attack damage before the health floor.
     Hit {
+        /// Source fighter.
         attacker: EntityId,
+        /// Defending fighter.
         target: EntityId,
+        /// Raw damage from this contact.
         damage: i32,
     },
+    /// A guarded contact dealing zero damage.
     Blocked {
+        /// Source fighter.
         attacker: EntityId,
+        /// Defending fighter.
         target: EntityId,
     },
+    /// Health reached zero on this tick.
     Knockout {
+        /// Affected fighter.
         id: EntityId,
     },
 }
