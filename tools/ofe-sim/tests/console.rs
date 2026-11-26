@@ -43,6 +43,11 @@ fn frame_script_matches_console_and_exercises_resolved_combat() {
     assert!(text.contains("state=LaneSwitch"));
     assert!(text.contains("state=Jump"));
     assert!(text.contains("z=1000"));
+    let last = text
+        .lines()
+        .find(|line| line.starts_with("frame=26 "))
+        .unwrap();
+    assert!(last.contains("p1 hp=36") && last.contains("p2 hp=60"));
 }
 
 #[test]
