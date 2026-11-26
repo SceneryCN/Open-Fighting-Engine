@@ -35,6 +35,7 @@ fn frame_script_matches_console_and_exercises_resolved_combat() {
     assert!(stdin.status.success());
     assert_eq!(run.stdout, stdin.stdout);
     let text = String::from_utf8(run.stdout).unwrap();
+    assert!(text.lines().eq(include_str!("duel.golden").lines()));
     assert!(text.contains("frame=0 p1 hp=60"));
     assert!(text.contains("p2 hp=75"));
     assert!(text.contains("frame=2 p1 hp=48"));

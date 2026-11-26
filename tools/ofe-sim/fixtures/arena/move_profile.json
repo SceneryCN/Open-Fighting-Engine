@@ -1,0 +1,61 @@
+{
+  "format": "OFE_MOVE_PROFILE",
+  "format_version": "1.0",
+  "moves": [
+    {
+      "id": "jab",
+      "kind": "strike",
+      "windows": [],
+      "cancel_into": []
+    },
+    {
+      "id": "flurry",
+      "kind": "strike",
+      "windows": [
+        {
+          "start": 0,
+          "end": 0
+        },
+        {
+          "start": 2,
+          "end": 2
+        }
+      ],
+      "cancel_into": [
+        "nova"
+      ]
+    },
+    {
+      "id": "grab",
+      "kind": "throw",
+      "windows": [],
+      "cancel_into": []
+    },
+    {
+      "id": "bolt",
+      "kind": "projectile",
+      "windows": [],
+      "cancel_into": [],
+      "speed": 2,
+      "lifetime": 8
+    },
+    {
+      "id": "nova",
+      "kind": "super",
+      "windows": [],
+      "cancel_into": []
+    },
+    {
+      "id": "brace",
+      "kind": "strike",
+      "windows": [],
+      "cancel_into": []
+    },
+    {
+      "id": "slip",
+      "kind": "strike",
+      "windows": [],
+      "cancel_into": []
+    }
+  ]
+}

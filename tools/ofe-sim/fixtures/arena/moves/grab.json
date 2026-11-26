@@ -1,0 +1,16 @@
+{
+  "id": "grab",
+  "startup": 0,
+  "active": 1,
+  "recovery": 2,
+  "damage": 9,
+  "hitstun": 4,
+  "blockstun": 2,
+  "hitstop": 1,
+  "pushback": 0,
+  "cancel_windows": [],
+  "invulnerability": 0,
+  "armor": 0,
+  "energy_cost": 0,
+  "lane_rule": "SAME_LANE"
+}

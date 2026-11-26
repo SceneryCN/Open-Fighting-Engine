@@ -1,0 +1,70 @@
+frame=0 p1 hp=60 state=Idle x=-2 z=0 h=0 facing=1 p2 hp=75 state=Idle x=2 z=0 h=0 facing=-1
+frame=1 p1 hp=60 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=75 state=Attack x=2 z=0 h=0 facing=-1
+  StateChanged { id: 1, state: Attack }
+  StateChanged { id: 2, state: Attack }
+frame=2 p1 hp=48 state=Hitstun x=-3 z=0 h=0 facing=1 p2 hp=60 state=Hitstun x=3 z=0 h=0 facing=-1
+  Hit { attacker: 1, target: 2, damage: 15 }
+  Hit { attacker: 2, target: 1, damage: 12 }
+  Moved { id: 1, position: Position { x: -3, z: 0, h: 0 } }
+  StateChanged { id: 1, state: Hitstun }
+  Moved { id: 2, position: Position { x: 3, z: 0, h: 0 } }
+  StateChanged { id: 2, state: Hitstun }
+frame=3 p1 hp=48 state=Hitstun x=-3 z=0 h=0 facing=1 p2 hp=60 state=Hitstun x=3 z=0 h=0 facing=-1
+frame=4 p1 hp=48 state=Hitstun x=-3 z=0 h=0 facing=1 p2 hp=60 state=Hitstun x=3 z=0 h=0 facing=-1
+frame=5 p1 hp=48 state=Idle x=-3 z=0 h=0 facing=1 p2 hp=60 state=Idle x=3 z=0 h=0 facing=-1
+  StateChanged { id: 1, state: Idle }
+  StateChanged { id: 2, state: Idle }
+frame=6 p1 hp=48 state=Walk x=-2 z=0 h=0 facing=1 p2 hp=60 state=Walk x=2 z=0 h=0 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 0, h: 0 } }
+  StateChanged { id: 1, state: Walk }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 0 } }
+  StateChanged { id: 2, state: Walk }
+frame=7 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Guard x=2 z=0 h=0 facing=-1
+  StateChanged { id: 1, state: Attack }
+  StateChanged { id: 2, state: Guard }
+frame=8 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Blockstun x=2 z=0 h=0 facing=-1
+  Blocked { attacker: 1, target: 2 }
+  StateChanged { id: 2, state: Blockstun }
+frame=9 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Blockstun x=2 z=0 h=0 facing=-1
+frame=10 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+  StateChanged { id: 2, state: Idle }
+frame=11 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+frame=12 p1 hp=48 state=LaneSwitch x=-2 z=0 h=0 facing=1 p2 hp=60 state=Jump x=2 z=0 h=4 facing=-1
+  StateChanged { id: 1, state: LaneSwitch }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 4 } }
+  StateChanged { id: 2, state: Jump }
+frame=13 p1 hp=48 state=LaneSwitch x=-2 z=0 h=0 facing=1 p2 hp=60 state=Jump x=2 z=0 h=7 facing=-1
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 7 } }
+frame=14 p1 hp=48 state=LaneSwitch x=-2 z=0 h=0 facing=1 p2 hp=60 state=Jump x=2 z=0 h=9 facing=-1
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 9 } }
+frame=15 p1 hp=48 state=LaneSwitch x=-2 z=166 h=0 facing=1 p2 hp=60 state=Jump x=2 z=0 h=10 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 166, h: 0 } }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 10 } }
+frame=16 p1 hp=48 state=LaneSwitch x=-2 z=333 h=0 facing=1 p2 hp=60 state=Fall x=2 z=0 h=10 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 333, h: 0 } }
+  StateChanged { id: 2, state: Fall }
+frame=17 p1 hp=48 state=LaneSwitch x=-2 z=500 h=0 facing=1 p2 hp=60 state=Fall x=2 z=0 h=9 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 500, h: 0 } }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 9 } }
+frame=18 p1 hp=48 state=LaneSwitch x=-2 z=666 h=0 facing=1 p2 hp=60 state=Fall x=2 z=0 h=7 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 666, h: 0 } }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 7 } }
+frame=19 p1 hp=48 state=LaneSwitch x=-2 z=833 h=0 facing=1 p2 hp=60 state=Fall x=2 z=0 h=4 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 833, h: 0 } }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 4 } }
+frame=20 p1 hp=48 state=LaneSwitch x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+  Moved { id: 1, position: Position { x: -2, z: 1000, h: 0 } }
+  Moved { id: 2, position: Position { x: 2, z: 0, h: 0 } }
+  StateChanged { id: 2, state: Idle }
+frame=21 p1 hp=48 state=LaneSwitch x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+frame=22 p1 hp=48 state=LaneSwitch x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+frame=23 p1 hp=48 state=LaneSwitch x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+frame=24 p1 hp=48 state=Idle x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Idle x=2 z=0 h=0 facing=-1
+  StateChanged { id: 1, state: Idle }
+frame=25 p1 hp=48 state=Attack x=-2 z=1000 h=0 facing=1 p2 hp=60 state=Attack x=2 z=0 h=0 facing=-1
+  StateChanged { id: 1, state: Attack }
+  StateChanged { id: 2, state: Attack }
+frame=26 p1 hp=36 state=Hitstun x=-3 z=1000 h=0 facing=1 p2 hp=60 state=Attack x=2 z=0 h=0 facing=-1
+  Hit { attacker: 2, target: 1, damage: 12 }
+  Moved { id: 1, position: Position { x: -3, z: 1000, h: 0 } }
+  StateChanged { id: 1, state: Hitstun }

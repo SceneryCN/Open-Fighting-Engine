@@ -40,17 +40,19 @@ struct Manifest {
     format: String,
     format_version: String,
     attributes: String,
-    moves: [String; 1],
+    moves: Vec<String>,
     hitboxes: [String; 1],
 }
 
 #[derive(Deserialize)]
 struct Attributes {
     max_health: i32,
+    max_energy: i32,
 }
 
 #[derive(Deserialize)]
 struct Move {
+    id: String,
     startup: u32,
     active: u32,
     recovery: u32,
@@ -62,7 +64,7 @@ struct Move {
     energy_cost: u32,
     invulnerability: u32,
     pushback: i32,
-    cancel_windows: Vec<serde_json::Value>,
+    cancel_windows: Vec<Bounds>,
     lane_rule: String,
     depth_range: Option<i32>,
 }
@@ -77,6 +79,10 @@ impl Move {
         {
             return Err("P1 requires zero hitstop, armor, energy_cost and invulnerability, and no cancel_windows".into());
         }
+        self.base(hitbox)
+    }
+
+    fn base(&self, hitbox: Rect) -> Result<AttackConfig, String> {
         let lane_rule = match (self.lane_rule.as_str(), self.depth_range) {
             ("SAME_LANE", None) => LaneRule::SameLane,
             ("CROSS_LANE", None) => LaneRule::CrossLane,
@@ -163,7 +169,10 @@ fn fighter(files: Files, movement: Movement) -> Result<FighterConfig, String> {
         return Err("P1 fixtures require OFC 1.0".into());
     }
     let attributes: Attributes = document(files, &manifest.attributes)?;
-    let definition: Move = document(files, &manifest.moves[0])?;
+    let [path] = manifest.moves.as_slice() else {
+        return Err("P1 requires one normal move".into());
+    };
+    let definition: Move = document(files, path)?;
     let boxes: BoxSet = document(files, &manifest.hitboxes[0])?;
     let attack = definition.into_attack(boxes.one("hit")?)?;
     Ok(FighterConfig {
@@ -224,3 +233,13 @@ mod tests {
         assert!(movement.into_attack(hitbox).is_err());
     }
 }
+
+#[derive(Deserialize, Clone, Copy)]
+#[serde(deny_unknown_fields)]
+struct Bounds {
+    start: u32,
+    end: u32,
+}
+
+mod arena_data;
+pub use arena_data::{ArenaMode, sample_arena_config};
