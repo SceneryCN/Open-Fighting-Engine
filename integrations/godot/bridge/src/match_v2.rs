@@ -184,7 +184,7 @@ impl Actor {
         let events: &[String] = if self.has_events { &frame.events } else { &[] };
         json!({"id":f.id,"team":slot.team,"name":self.name,"x":f.position.x,"z":f.position.z,"h":f.position.h,
             "facing":f.facing,"state":state_name(f.state),"hp":f.health,"max_hp":self.max_hp,
-            "energy":slot.energy,"max_energy":self.max_energy,"animation":{"clip":clip.id(),"index":index,
+            "energy":slot.energy,"max_energy":self.max_energy,"move_count":self.moves.len(),"animation":{"clip":clip.id(),"index":index,
             "image_id":image_ids[&(frame.image.as_ptr() as usize)],"rect":[rect.x,rect.y,rect.width,rect.height],
             "origin":[frame.origin.x,frame.origin.y],"events":events}})
     }
@@ -579,6 +579,7 @@ mod tests {
                 let initial: Value = serde_json::from_slice(&bytes).unwrap();
                 for (i, team) in teams.iter().enumerate() {
                     assert_eq!(initial["fighters"][i]["team"], *team);
+                    assert_eq!(initial["fighters"][i]["move_count"], 1);
                 }
                 assert_eq!(ofe_v2_set_infinite_health(token, 1), INVALID_ARGUMENT);
                 assert_eq!(ofe_v2_step(token, 1, 0, 0), INVALID_ARGUMENT);
