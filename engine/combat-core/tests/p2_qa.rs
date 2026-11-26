@@ -567,3 +567,50 @@ fn active_enemy_facing_prefers_distance_then_lowest_id() {
     tick(&mut game, &[]);
     assert_eq!(who(&game, 22).fighter.facing, -1);
 }
+
+#[test]
+fn legacy_duel_retains_facing_after_winner_walks_past_ko_opponent() {
+    let attacker = actor(1, 1, 0, vec![strike()]).base;
+    let mut defender = actor(2, 2, 1, vec![strike()]).base;
+    defender.max_health = 1;
+    let mut duel = Duel::new(DuelConfig {
+        fighters: [attacker, defender],
+        lane: LaneConfig {
+            startup: 1,
+            travel: 2,
+            recovery: 1,
+            cooldown: 2,
+            interruptible: true,
+        },
+    })
+    .unwrap();
+    duel.step(
+        1,
+        [
+            Controls {
+                attack: true,
+                ..Default::default()
+            },
+            Controls::default(),
+        ],
+    )
+    .unwrap();
+    assert_eq!(duel.fighters()[1].state, State::Ko);
+    for frame in 2..=5 {
+        duel.step(frame, [Controls::default(); 2]).unwrap();
+    }
+    duel.step(
+        6,
+        [
+            Controls {
+                axis: 1,
+                ..Default::default()
+            },
+            Controls::default(),
+        ],
+    )
+    .unwrap();
+    assert!(duel.fighters()[0].position.x > duel.fighters()[1].position.x);
+    duel.step(7, [Controls::default(); 2]).unwrap();
+    assert_eq!(duel.fighters()[0].facing, -1);
+}
