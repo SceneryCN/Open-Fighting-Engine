@@ -205,17 +205,25 @@ fn loaded_character_owns_data_and_preserves_declared_move_order() {
     let first = Character::load(&pkg.0).unwrap();
     pkg.json("attributes.json", json!({"max_health":99,"max_energy":17}));
     let changed = Character::load(&pkg.0).unwrap();
-    assert_eq!(first.id(), "qa_order");
-    assert_eq!(first.max_health(), 60);
-    assert_eq!(changed.max_health(), 99);
-    assert_eq!(changed.max_energy(), 17);
-    assert_eq!(first.move_ids().collect::<Vec<_>>(), ["second", "tap"]);
-    assert_eq!(first.animations().len(), 1);
+    assert_eq!(first.id, "qa_order");
+    assert_eq!(first.combat.attributes.max_health, 60);
+    assert_eq!(changed.combat.attributes.max_health, 99);
+    assert_eq!(changed.combat.attributes.max_energy, 17);
+    assert_eq!(
+        first
+            .combat
+            .moves
+            .iter()
+            .map(|m| m.id())
+            .collect::<Vec<_>>(),
+        ["second", "tap"]
+    );
+    assert_eq!(first.animations.len(), 1);
     fs::remove_file(pkg.0.join("clips/grid.png")).unwrap();
     assert!(Character::load(&pkg.0).is_err());
     drop(pkg);
     assert_eq!(
-        Player::new(&first.animations()[0]).tick(),
+        Player::new(&first.animations[0]).tick(),
         ["begin", "accent"]
     );
 }
