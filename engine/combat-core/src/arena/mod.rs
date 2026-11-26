@@ -5,7 +5,7 @@ mod action;
 mod geometry;
 mod resolve;
 mod types;
-use crate::duel::{Controls, DuelError, Event, Fighter, LaneConfig, State};
+use crate::duel::{DuelError, Event, Fighter, LaneConfig, State};
 use crate::{EntityId, Position};
 use action::{Action, Timers, next_id, shift};
 use resolve::Contact;
@@ -26,15 +26,40 @@ impl CombatantConfig {
         {
             return false;
         }
-        self.moves.iter().enumerate().all(|(i, m)| {
-            let start = u64::from(m.base.startup);
-            let end = start + u64::from(m.base.active);
-            m.base.valid() && m.energy_cost >= 0 &&
-                !matches!(m.kind, MoveKind::Projectile {speed, lifetime} if speed <= 0 || lifetime == 0) &&
-                m.windows.iter().all(|w| w.start <= w.end && u64::from(w.start) >= start && u64::from(w.end) < end)
-                && m.windows.windows(2).all(|p| p[0].end < p[1].start)
-                && m.cancels.iter().all(|c| c.into != i && c.into < self.moves.len() && c.window.start <= c.window.end && u64::from(c.window.end) < m.duration())
-        })
+        self.moves
+            .iter()
+            .enumerate()
+            .all(|(i, m)| m.valid(i, self.moves.len()))
+    }
+}
+
+impl MoveConfig {
+    fn valid(&self, index: usize, move_count: usize) -> bool {
+        if !self.base.valid() || self.energy_cost < 0 {
+            return false;
+        }
+        if let MoveKind::Projectile { speed, lifetime } = self.kind
+            && (speed <= 0 || lifetime == 0)
+        {
+            return false;
+        }
+
+        let first_active = u64::from(self.base.startup);
+        let end_active = first_active + u64::from(self.base.active);
+        let valid_windows = self.windows.iter().all(|w| {
+            w.start <= w.end && u64::from(w.start) >= first_active && u64::from(w.end) < end_active
+        });
+        let disjoint = self
+            .windows
+            .windows(2)
+            .all(|pair| pair[0].end < pair[1].start);
+        let valid_cancels = self.cancels.iter().all(|c| {
+            c.into != index
+                && c.into < move_count
+                && c.window.start <= c.window.end
+                && u64::from(c.window.end) < self.duration()
+        });
+        valid_windows && disjoint && valid_cancels
     }
 }
 
@@ -58,7 +83,13 @@ struct World {
     last_id: u64,
 }
 
-type Spawn = (EntityId, usize, u64, Position, i32);
+struct Spawn {
+    id: EntityId,
+    move_index: usize,
+    cast: u64,
+    position: Position,
+    facing: i32,
+}
 
 struct FrameEffects {
     events: Vec<ArenaEvent>,
@@ -79,9 +110,10 @@ fn facing(actors: &[ArenaFighter], i: usize) -> i32 {
     let actor = actors[i];
     let opponent = actors
         .iter()
-        .filter(|v| v.team != actor.team && v.fighter.state != State::Ko)
+        .filter(|v| v.team != actor.team)
         .min_by_key(|v| {
             (
+                v.fighter.state == State::Ko,
                 v.fighter.position.x.abs_diff(actor.fighter.position.x),
                 v.fighter.id,
             )
@@ -291,7 +323,14 @@ impl World {
         }
         self.flights.truncate(kept);
         self.projectiles.truncate(kept);
-        for (id, move_index, cast, position, facing) in effects.spawn.drain(..) {
+        for Spawn {
+            id,
+            move_index,
+            cast,
+            position,
+            facing,
+        } in effects.spawn.drain(..)
+        {
             let owner = self
                 .fighters
                 .binary_search_by_key(&id, |f| f.fighter.id)
@@ -438,3 +477,6 @@ impl World {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests;
