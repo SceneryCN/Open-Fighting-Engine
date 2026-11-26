@@ -67,3 +67,5 @@
 Python 校验器及所有间接依赖的版本、源站与再分发条件见 [格式工具依赖初审](docs/formats/validator-dependencies.md)。
 
 本地 build host 实测 CMake 4.4.5、Ninja 1.13.2、clang-format 23.1.5 和 Apple Clang 21.0.0。平台编译器、转译及容器环境的实测组合以 QA 报告和构建证据为准。上述开发工具只用来构建或检查本地样例。
+
+P3 的 ZIP 读写、临时目录和 CRC 校验使用 Python 标准库。新增 Rust 工作区模块复用锁文件中的 serde 和 serde_json。角色装载、动画时序和文件读取位于引擎独立模块，战斗核心的运行时依赖仍只有 Rust 标准库。

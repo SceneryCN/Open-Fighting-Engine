@@ -172,6 +172,10 @@ def validate(path, expected=None, checked=None, files=None, label=None):
                 width, height = struct.unpack(">II", header[16:24])
                 if not (0 < width < 2**31 and 0 < height < 2**31):
                     raise Invalid("invalid PNG dimensions")
+                depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8), 4: (8, 16), 6: (8, 16)}
+                if (header[24] not in depths.get(header[25], ())
+                        or header[26:28] != bytes(2) or header[28] > 1):
+                    raise Invalid("invalid PNG IHDR encoding")
                 if kind == "OFA" and data["source"]["kind"] == "sheet":
                     source = data["source"]
                     if width % source["columns"] or height % source["rows"]:

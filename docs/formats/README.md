@@ -31,3 +31,7 @@ python -m unittest discover -s tests/formats -v
 ## P2 招式补充配置
 
 OFC 1.0 描述基础帧数、伤害、硬直、击停、护甲、无敌、取消窗口与能量。P2 场景以相对路径配对 OFC 和独立的 OFE_MOVE_PROFILE 1.0 文件，补充招式种类、多段窗口、取消目标与投射物参数。校验器检查文件结构、ID 唯一性和有序窗口；模拟器在构造 Arena 前对照角色 manifest 检查 ID、取消目标及窗口是否位于相应招式时序内。[Schema](../../formats/ofe_move_profile/schema.json) · [可运行样例](../../tools/ofe-sim/fixtures/arena/move_profile.json)
+
+## P3 角色目录与发布包
+
+作者工具的 validate 支持 OFC 目录和 .ofc ZIP，inspect 输出作者、许可、动作、动画和依赖声明。package 只收集资源引用图和可选的 move_profile.json。run 解开并校验归档，再启动本地模拟器。动画资源检查 PNG 头部尺寸、图集网格和索引。完整命令见[角色使用指南](../p3/CHARACTERS.md)。

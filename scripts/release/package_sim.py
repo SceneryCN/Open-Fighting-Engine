@@ -38,6 +38,11 @@ def package(output):
             (ROOT / "target/release" / executable, executable),
             (ROOT / "tools/ofe-sim/fixtures/duel.frames", "duel.frames"),
             (ROOT / "tools/ofe-sim/fixtures/arena.frames", "arena.frames"),
+            (ROOT / "tools/ofe-sim/fixtures/amber", "characters/amber"),
+            (ROOT / "tools/ofe-validator/ofe.py", "tools/ofe-validator/ofe.py"),
+            (ROOT / "tools/ofe-validator/ofc_archive.py", "tools/ofe-validator/ofc_archive.py"),
+            (ROOT / "tools/ofe-validator/requirements.txt", "tools/ofe-validator/requirements.txt"),
+            (ROOT / "formats", "formats"),
             (ROOT / "LICENSE", "LICENSE"),
             (ROOT / "LICENSES", "LICENSES"),
             (ROOT / "tools/ofe-sim/fixtures/amber/licenses/notice.txt", "LICENSES/samples.txt"),
@@ -54,6 +59,10 @@ def package(output):
         readme = (f"OFE combat simulator\nSource: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
                   f"Run ./{executable} --script duel.frames to replay the example, or ./{executable} for interactive controls.\n"
                   f"Run ./{executable} --mode 2v2 --script arena.frames or use --mode ffa for four independent teams.\n"
+                  f"Run ./{executable} --character characters/amber --script duel.frames to use the external character.\n"
+                  "Install the authoring CLI dependencies using Python 3.12: python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt\n"
+                  "Build a character: python tools/ofe-validator/ofe.py package characters/amber amber.ofc\n"
+                  f"Play the packed character: python tools/ofe-validator/ofe.py run amber.ofc --simulator ./{executable} --script duel.frames\n"
                   "Built with Rust 1.100.0. Standard library notices: https://doc.rust-lang.org/1.100.0/copyright.html\n").encode()
         info = tarfile.TarInfo("README.txt")
         info.size = len(readme)

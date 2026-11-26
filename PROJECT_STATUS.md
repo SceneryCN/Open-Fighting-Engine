@@ -1,12 +1,5 @@
 # OFE 项目状态 · 2026-11-26
 
-P0、P1 已由项目负责人签收。当前阶段 P2 Advanced Combat，状态 TESTING，待负责人最终签收。
+项目负责人已签收 P0、P1，并授权在 P0 至 P2 复核问题解决后启动 P3。复核修复了场景重入和数值加载问题，独立 QA 核对了优化前后的战斗结果。[复核记录](docs/testing/P0_P2_REVIEW.md) · [原 P2 交付报告](docs/p2/DELIVERY_REPORT.md)
 
-|工作包|状态|验证点|
-|---|---|---|
-|公共接口与数据|TESTING|ADR-005；显式 ID 和队伍、版本化的招式补充配置、兼容 OFC 1.0|
-|核心结算|TESTING|单套 Arena 推进双人与多人，逐帧测试确认击停、取消、多段、投射物、护甲和四人同时接触|
-|独立模拟器|TESTING|22 帧脚本在 2v2 与 FFA 产生可核对的目标差异；兼容 P1 双人用例|
-|质量与交付|TESTING|QA 独立矩阵、桌面 CI、归档验证和 Criterion 实测|
-
-风险包括多投射物负载及双人适配新增的耗时。负责人审阅交付报告后决定是否签收；P3 为 NOT_STARTED。[交付报告](DELIVERY_REPORT.md) · [独立 QA](docs/testing/P2_ACCEPTANCE_REPORT.md) · [持续集成](https://github.com/SceneryCN/Open-Fighting-Engine/actions)
+P3 Character & Animation Runtime 已启动。ADR-006 冻结角色目录、ZIP 归档、动画时序、资源缓存和模拟器入口。P3 最终签收由项目负责人决定。P4 尚未启动。[公共契约](docs/architecture/ADR-006.md) · [使用外部角色](docs/p3/CHARACTERS.md)
