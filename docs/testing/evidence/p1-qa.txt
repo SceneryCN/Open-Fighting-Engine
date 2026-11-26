@@ -1,0 +1,66 @@
+Independent QA, macOS 27.3 arm64, rustc 1.100.0, Godot 4.7.2 stable.
+Before fix: core 300c9e7. Successful retest: core 4392288 / simulator 61e2533 / integration main 4302f1b + independent QA tests.
+Below are selected original execution lines from this worktree.
+
+# ko-before
+test fatal_interrupt_cancels_switch_at_nearest_lane ... FAILED
+assertion `left == right` failed
+  left: 500
+ right: 1000
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+# final
++zsh:1> cargo fmt --all -- --check
++zsh:1> cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
++zsh:1> cargo test --locked --workspace
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++zsh:1> cargo nextest run --locked --workspace
+     Summary [   0.320s] 33 tests run: 33 passed, 0 skipped
++zsh:1> cargo tree -p ofe-combat-core -e normal
+ofe-combat-core v0.1.0 (/private/tmp/ofe-p1-qa/engine/combat-core)
++zsh:1> cargo build --locked --release -p ofe-sim
++zsh:1> target/release/ofe-sim --script tools/ofe-sim/fixtures/duel.frames
+frame=2 p1 hp=48 state=Hitstun x=-3 z=0 h=0 facing=1 p2 hp=60 state=Hitstun x=3 z=0 h=0 facing=-1
+  Hit { attacker: 1, target: 2, damage: 15 }
+  Hit { attacker: 2, target: 1, damage: 12 }
+frame=8 p1 hp=48 state=Attack x=-2 z=0 h=0 facing=1 p2 hp=60 state=Blockstun x=2 z=0 h=0 facing=-1
+  Blocked { attacker: 1, target: 2 }
+frame=17 p1 hp=48 state=LaneSwitch x=-2 z=500 h=0 facing=1 p2 hp=60 state=Fall x=2 z=0 h=9 facing=-1
+frame=26 p1 hp=36 state=Hitstun x=-3 z=1000 h=0 facing=1 p2 hp=60 state=Attack x=2 z=0 h=0 facing=-1
+  Hit { attacker: 2, target: 1, damage: 12 }
+
+# p0-final
+1/2 Test #1: abi_smoke ........................   Passed    0.32 sec
+2/2 Test #2: concurrent_abi ...................   Passed    0.30 sec
+100% tests passed out of 2
+OFE_P0_PASS
+Ran 12 tests in 0.130s
+OK
+OK tools/ofe-sim/fixtures/amber/manifest.json
+OK tools/ofe-sim/fixtures/indigo/manifest.json
+
+# bench-final
+Benchmarking duel/idle_tick: Collecting 20 samples in estimated 2.0000 s (110M iterations)
+duel/idle_tick          time:   [17.751 ns 17.829 ns 17.920 ns]
+Benchmarking duel/trade_tick: Collecting 20 samples in estimated 2.0000 s (13M iterations)
+duel/trade_tick         time:   [27.975 ns 28.442 ns 28.957 ns]
+
+# package
++zsh:1> python3 scripts/release/package_sim.py build/p1qa.tar.gz
++zsh:1> mkdir -p build/qa-package
++zsh:1> tar -xzf build/p1qa.tar.gz -C build/qa-package
++zsh:1> cd build/qa-package
++zsh:1> ls -l
++zsh:1> ./ofe-sim --script duel.frames
++zsh:1> tail -5
+frame=26 p1 hp=36 state=Hitstun x=-3 z=1000 h=0 facing=1 p2 hp=60 state=Attack x=2 z=0 h=0 facing=-1

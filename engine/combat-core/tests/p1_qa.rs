@@ -349,3 +349,35 @@ fn identical_input_repeats_states_and_ordered_events_each_frame() {
     }
     assert_eq!(first.frame(), tick_count);
 }
+
+#[test]
+fn walking_behind_a_locked_attack_avoids_its_active_frame() {
+    let mut cfg = config(5);
+    cfg.fighters[0].attack.startup = 1;
+    cfg.fighters[1].walk_speed = 10;
+    let mut game = create(cfg);
+    tick(&mut game, attack(), neutral());
+    tick(
+        &mut game,
+        neutral(),
+        Controls {
+            axis: -1,
+            ..neutral()
+        },
+    );
+    assert_eq!(game.fighters()[1].position.x, -5);
+    assert_eq!(game.fighters()[1].health, 100);
+    assert!(hits(&game).is_empty());
+}
+
+#[test]
+fn fatal_interrupt_cancels_switch_at_nearest_lane() {
+    let mut cfg = config(8);
+    cfg.fighters[1].max_health = 1;
+    cfg.fighters[0].attack.lane_rule = LaneRule::BothLanes;
+    let mut game = create(cfg);
+    tick(&mut game, neutral(), switch());
+    tick(&mut game, attack(), neutral());
+    assert_eq!(game.fighters()[1].state, State::Ko);
+    assert_eq!(game.fighters()[1].position.z, 1000);
+}
