@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Two-character Arena ABI. Simulation and presentation live behind the same handle.
 use super::{INPUT_CONFLICT, INTERNAL, INVALID_ARGUMENT, INVALID_HANDLE, LIMIT, OK};
-use ofe_animation_runtime::{Clip, Cursor};
+use ofe_animation_runtime::{Clip, Playback};
 use ofe_character_runtime::{Character, duel_scene};
 use ofe_combat_core::{
     arena::{Arena, ArenaEvent, ArenaFighter, Command},
@@ -71,16 +71,16 @@ struct Actor {
     name: String,
     max_hp: i32,
     max_energy: i32,
-    clips: Vec<Clip>,
+    clips: Vec<Arc<Clip>>,
     active: usize,
     fallback: usize,
-    cursor: Cursor,
+    player: Playback<Arc<Clip>>,
     has_events: bool,
 }
 
 impl Actor {
     fn new(character: Character) -> Self {
-        let clips = character.animations;
+        let clips: Vec<_> = character.animations.into_iter().map(Arc::new).collect();
         let fallback = clips
             .iter()
             .position(|clip| clip.id() == "idle")
@@ -89,10 +89,10 @@ impl Actor {
             name: character.name,
             max_hp: character.combat.attributes.max_health,
             max_energy: character.combat.attributes.max_energy,
+            player: Playback::new(Arc::clone(&clips[fallback])),
             clips,
             active: fallback,
             fallback,
-            cursor: Cursor::default(),
             has_events: false,
         }
     }
@@ -105,15 +105,15 @@ impl Actor {
             .unwrap_or(self.fallback);
         if active != self.active {
             self.active = active;
-            self.cursor = Cursor::default();
+            self.player = Playback::new(Arc::clone(&self.clips[active]));
         }
-        self.has_events = !self.cursor.tick(&self.clips[active]).is_empty();
+        self.has_events = !self.player.tick().is_empty();
     }
 
     fn snapshot(&self, slot: &ArenaFighter, image_ids: &HashMap<usize, u32>) -> Value {
         let f = slot.fighter;
         let clip = &self.clips[self.active];
-        let index = self.cursor.frame_index();
+        let index = self.player.frame_index();
         let frame = &clip.frames()[index];
         let rect = frame.source_rect;
         let events: &[String] = if self.has_events { &frame.events } else { &[] };
@@ -351,4 +351,79 @@ pub unsafe extern "C" fn ofe_v2_image(
         // SAFETY: passed through to copy under the same caller requirements.
         unsafe { copy(image, out, capacity, length) }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::CString;
+    use std::ptr::null_mut;
+
+    fn fixture(character: &str) -> CString {
+        CString::new(format!(
+            "{}/../../../tools/ofe-sim/fixtures/{character}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap()
+    }
+
+    fn snapshot(token: u64) -> Vec<u8> {
+        let mut length = 0;
+        // SAFETY: null,0 is a size query. The second call owns exactly length bytes.
+        unsafe {
+            assert_eq!(ofe_v2_snapshot(token, null_mut(), 0, &mut length), LIMIT);
+            let mut bytes = vec![0; length as usize];
+            assert_eq!(
+                ofe_v2_snapshot(token, bytes.as_mut_ptr(), length, &mut length),
+                OK
+            );
+            bytes
+        }
+    }
+
+    #[test]
+    fn published_frames_and_image_buffers_are_atomic_until_a_valid_step() {
+        let p1 = fixture("amber");
+        let p2 = fixture("indigo");
+        let mut token = 0;
+        // SAFETY: temporary paths stay alive and the token is an aligned local.
+        assert_eq!(
+            unsafe { ofe_v2_create(p1.as_ptr(), p2.as_ptr(), &mut token) },
+            OK
+        );
+        assert_eq!(super::super::ofe_v1_destroy(token), INVALID_HANDLE);
+        let initial = snapshot(token);
+        let parsed: Value = serde_json::from_slice(&initial).unwrap();
+        assert_eq!(parsed["fighters"][0]["hp"], 60);
+        assert_eq!(parsed["fighters"][1]["hp"], 75);
+        let image = parsed["fighters"][0]["animation"]["image_id"]
+            .as_u64()
+            .unwrap() as u32;
+        let mut sentinel = 37;
+        let mut length = 0;
+        // SAFETY: the buffer capacity is one byte, the length is independently writable.
+        assert_eq!(
+            unsafe { ofe_v2_image(token, image, &mut sentinel, 1, &mut length) },
+            LIMIT
+        );
+        assert!(length > 8);
+        assert_eq!(sentinel, 37);
+        for mask in [3, 128, 0x0100_0000, (1 << 8) | 16, 2 << 8] {
+            assert_eq!(ofe_v2_step(token, 1, 16, mask), INVALID_ARGUMENT);
+            assert_eq!(snapshot(token), initial);
+        }
+        assert_eq!(ofe_v2_step(token, 2, 16, 0), INPUT_CONFLICT);
+        assert_eq!(ofe_v2_step(token, 1, 16, 0), OK);
+        assert_eq!(ofe_v2_step(token, 2, 0, 0), OK);
+        let after: Value = serde_json::from_slice(&snapshot(token)).unwrap();
+        assert_eq!(after["fighters"][1]["hp"], 60);
+        assert!(
+            after["events"]
+                .as_array()
+                .unwrap()
+                .contains(&json!({"kind":"Hit","attacker":1,"target":2,"damage":15}))
+        );
+        assert_eq!(ofe_v2_destroy(token), OK);
+        assert_eq!(ofe_v2_step(token, 3, 0, 0), INVALID_HANDLE);
+    }
 }
