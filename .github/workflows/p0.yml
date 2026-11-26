@@ -70,14 +70,14 @@ jobs:
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/p3 -v
           cargo test --locked -p ofe-animation-runtime -p ofe-character-runtime -p ofe-resource-runtime
-          python scripts/release/package_sim.py build/ofe-sim.tar.gz
+          python scripts/release/package_sim.py build/ofe-sim-${{ matrix.id }}.tar.gz
           mkdir -p build/sim-package
-          tar -xzf build/ofe-sim.tar.gz -C build/sim-package
+          tar -xzf build/ofe-sim-${{ matrix.id }}.tar.gz -C build/sim-package
           (cd build/sim-package && python tools/ofe-validator/ofe.py package characters/amber amber.ofc && python tools/ofe-validator/ofe.py run amber.ofc --simulator "./$sim" --script duel.frames)
       - uses: actions/upload-artifact@v7
         with:
           name: ofe-sim-${{ matrix.id }}
-          path: build/ofe-sim.tar.gz
+          path: build/ofe-sim-${{ matrix.id }}.tar.gz
       - name: Build and install bridge
         run: |
           cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
@@ -97,8 +97,28 @@ jobs:
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
           python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported --simulator "$sim"
           python scripts/test/p7_author.py "$PWD/build/export/${{ matrix.binary }}" --exported
-          python scripts/release/package_runtime.py build/export build/ofe-runtime.tar.gz
+          python scripts/release/package_runtime.py build/export build/ofe-runtime-${{ matrix.id }}.tar.gz
+          python scripts/release/verify_release.py desktop "${{ matrix.id }}" "build/ofe-runtime-${{ matrix.id }}.tar.gz" "build/ofe-sim-${{ matrix.id }}.tar.gz"
       - uses: actions/upload-artifact@v7
         with:
           name: ofe-runtime-${{ matrix.id }}
-          path: build/ofe-runtime.tar.gz
+          path: build/ofe-runtime-${{ matrix.id }}.tar.gz
+  candidate:
+    name: Verify the complete candidate and publish checksums
+    runs-on: ubuntu-24.04
+    needs: [quality, proof]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: ofe-*
+          merge-multiple: true
+          path: build/candidate
+      - run: |
+          python scripts/release/verify_release.py manifest build/candidate
+          cd build/candidate
+          sha256sum --check SHA256SUMS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ofe-candidate-checksums
+          path: build/candidate/SHA256SUMS

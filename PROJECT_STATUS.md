@@ -1,5 +1,5 @@
-# OFE 项目状态 · P7
+# OFE 项目状态 · P8
 
-P7 已进入 TESTING。外部作者可用两个 Rust SDK 生成角色与动画，用 CLI 打包项目并追加角色，在游戏中选人对战。最终签收由项目负责人决定。
+P8 正在验证 0.1.0-rc.1 桌面候选，当前为 TESTING。四个平台使用同一版本的新键位。公开发行由项目负责人验收后决定。
 
-[作者入门](docs/p7/AUTHORING.md) · [版本任务书](docs/p7/TASK_V1.md) · [交付报告](DELIVERY_REPORT.md) · [P6 交付归档](docs/p6/DELIVERY_REPORT.md)
+[安装与运行](docs/p8/INSTALL.md) · [版本任务书](docs/p8/TASK_V1.md) · [交付报告](DELIVERY_REPORT.md) · [P7 交付归档](docs/p7/DELIVERY_REPORT.md)

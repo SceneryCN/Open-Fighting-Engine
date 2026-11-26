@@ -1,21 +1,7 @@
-# P7 SDK 与 Mod 基础交付报告
+# P8 跨平台候选交付 · 0.1.0-rc.1
 
-作者可以从独立 Rust 项目生成 Rook，编辑生命、伤害与逐帧动画，打包为 OFC 并加入自己的 OGP 项目。游戏按项目的标题、模式、角色顺序与纵深投影运行。示例项目和引擎一起提供。[作者入门](docs/p7/AUTHORING.md) · [SDK API 与示例](docs/p7/SDK.md) · [任务书](docs/p7/TASK_V1.md) · [架构决议](docs/architecture/ADR-010.md)
+本次交付包括 Windows x64、Linux x64、macOS ARM64 和 macOS x64 的游戏与模拟器，以及通用作者工具。各游戏包从 Sunset Viaduct 主菜单进入对战。文件、校验记录与版本对应的提交一起交负责人验收。[安装与运行](docs/p8/INSTALL.md) · [任务书](docs/p8/TASK_V1.md) · [架构决议](docs/architecture/ADR-011.md)
 
-## 交付内容
+一号位使用 A/D 左右移动、W 跳、S 换线，J 或 O 普攻、K 防御、L 冲刺、U 特殊技、I 超必杀。二号位使用方向键和 F/G/H/R/T，游戏主菜单和暂停菜单均可查看完整操作。[全部席位与手柄操作](docs/p5/PLAY.md)
 
-- 通用作者包提供两个 MIT Rust SDK、独立作者示例、可编辑的项目与角色、Schema、CLI 和许可。四个桌面运行时沿用同一个数据接口。
-- CLI 支持目录与 ZIP 归档，递归校验项目中的角色、动作、动画和布局，打包时保留关联资源。可将本地目录或 OFC 归档按指定顺序追加到项目。
-- 游戏载入角色时从原生对战读取初始动画图像与区域，选人菜单和实际对战使用同一份数据。项目资源中的舞台、布局与音频随包分发，本阶段游戏沿用内置表现。启动遇到重复角色 ID 或待解析的依赖会报告错误。
-
-## 验收
-
-独立 QA 将作者包与游戏包分别解到仓库外。两名第三方角色通过选人进入 Rust 对局，自定义攻击造成 23 点伤害，受击方的生命与血条均从 113 降至 90。六种错误输入均在启动游戏前被拒绝。85 项 Rust 测试、两项单独运行的性能与内存测试、3 项 CTest、24 项 Python 测试通过，编辑器与导出程序均通过历史场景回归。[独立 QA 报告](docs/testing/P7_ACCEPTANCE_REPORT.md)
-
-在 M1 Max 的真实导出窗口预热 120 帧后采样 600 个绘制间隔，同期推进 600 个模拟帧。平均 59.983 FPS，绘制间隔 P99 为 20.986 ms，最长 23.728 ms。其他平台的 GPU 帧时间尚待实机测量。[机器记录](docs/testing/evidence/p7-author.json)
-
-当前状态为 TESTING，待项目负责人签收。[P6 交付归档](docs/p6/DELIVERY_REPORT.md)
-
-## 四平台运行记录
-
-提交 `6d0e2d2` 的质量检查及 Windows x64、Linux x64、macOS ARM64、macOS x64 四个构建任务全部成功。四端均通过编辑器与导出游戏的外部作者测试，产生一个通用作者包、四个游戏包和四个模拟器包。[四平台运行记录与下载](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45823912113)
+公开标签与正式发行页将在负责人验收并授权后建立。[P7 交付归档](docs/p7/DELIVERY_REPORT.md)

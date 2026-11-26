@@ -2,6 +2,7 @@ config_version=5
 
 [application]
 config/name="Open Fighting Engine"
+config/version="0.1.0-rc.1"
 run/main_scene="res://demo.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
