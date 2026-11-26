@@ -1,5 +1,5 @@
 [workspace]
-members = ["engine/combat-core", "integrations/godot/bridge"]
+members = ["engine/combat-core", "integrations/godot/bridge", "tools/ofe-sim"]
 resolver = "3"
 
 [workspace.package]

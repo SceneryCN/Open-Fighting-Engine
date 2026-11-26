@@ -1,0 +1,31 @@
+{
+  "fighters": [
+    {
+      "spawn": {
+        "x": -2,
+        "z": 0,
+        "h": 0
+      },
+      "walk_speed": 1,
+      "jump_speed": 4,
+      "gravity": 1
+    },
+    {
+      "spawn": {
+        "x": 2,
+        "z": 0,
+        "h": 0
+      },
+      "walk_speed": 1,
+      "jump_speed": 4,
+      "gravity": 1
+    }
+  ],
+  "lane": {
+    "startup": 3,
+    "travel": 6,
+    "recovery": 3,
+    "cooldown": 20,
+    "interruptible": true
+  }
+}
