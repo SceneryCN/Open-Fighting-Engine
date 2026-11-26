@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Resolve eligible contacts against one post-movement, pre-damage world.
-use super::{ArenaEvent, ArenaFighter};
-use crate::duel::{AttackConfig, DuelError, Event, State};
+use super::{ArenaConfig, ArenaEvent, ArenaFighter, MoveKind};
+use crate::duel::{DuelError, Event, State};
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Contact {
@@ -10,12 +10,12 @@ pub(super) struct Contact {
     pub instance: u64,
     pub window: usize,
     pub facing: i32,
-    pub attack: AttackConfig,
-    pub hitstop: u32,
-    pub throw: bool,
+    pub move_index: usize,
+    pub projectile: Option<usize>,
+    pub blocked: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub(super) struct Impact {
     pub damage: i64,
     pub push: i64,
@@ -27,69 +27,52 @@ pub(super) struct Impact {
     pub blocked: bool,
 }
 
-pub(super) struct ContactResult {
-    pub impacts: Vec<Impact>,
-    pub events: Vec<ArenaEvent>,
-    // Indices refer to the canonically sorted contact list.
-    pub resolved: Vec<(usize, bool)>,
-}
-
 pub(super) fn resolve(
     fighters: &[ArenaFighter],
-    armor: &[u32],
-    invulnerable: &[bool],
+    config: &ArenaConfig,
+    armor: &[u32; 4],
     contacts: &mut [Contact],
-) -> Result<ContactResult, DuelError> {
+    events: &mut Vec<ArenaEvent>,
+) -> Result<[Impact; 4], DuelError> {
     contacts.sort_unstable_by_key(|c| (c.attacker, c.target, c.instance, c.window));
-    let mut result = ContactResult {
-        impacts: (0..fighters.len()).map(|_| Impact::default()).collect(),
-        events: Vec::new(),
-        resolved: Vec::new(),
-    };
-    for (index, c) in contacts.iter().enumerate() {
+    let mut impacts = [Impact::default(); 4];
+    for c in contacts {
         let source = &fighters[c.attacker];
         let defender = &fighters[c.target];
-        if invulnerable[c.target]
-            || defender.fighter.state == State::Ko
-            || source.team == defender.team
-        {
-            continue;
-        }
+        let rules = &config.fighters[c.attacker].moves[c.move_index];
         let attacker = source.fighter.id;
         let target = defender.fighter.id;
-        let blocked = !c.throw && matches!(defender.fighter.state, State::Guard | State::Blockstun);
-        result.resolved.push((index, blocked));
-        let source_effect = &mut result.impacts[c.attacker];
-        source_effect.hitstop = source_effect.hitstop.max(c.hitstop);
-        let effect = &mut result.impacts[c.target];
-        effect.hitstop = effect.hitstop.max(c.hitstop);
-        if blocked {
+        let throw = rules.kind == MoveKind::Throw;
+        c.blocked = !throw && matches!(defender.fighter.state, State::Guard | State::Blockstun);
+        let source_effect = &mut impacts[c.attacker];
+        source_effect.hitstop = source_effect.hitstop.max(rules.hitstop);
+        let effect = &mut impacts[c.target];
+        effect.hitstop = effect.hitstop.max(rules.hitstop);
+        if c.blocked {
             effect.blocked = true;
-            effect.blockstun = effect.blockstun.max(c.attack.blockstun);
-            result
-                .events
-                .push(ArenaEvent::Base(Event::Blocked { attacker, target }));
+            effect.blockstun = effect.blockstun.max(rules.base.blockstun);
+            events.push(ArenaEvent::Base(Event::Blocked { attacker, target }));
             continue;
         }
-        let damage = c.attack.damage;
+        let damage = rules.base.damage;
         effect.damage = effect
             .damage
             .checked_add(i64::from(damage))
             .ok_or(DuelError::Overflow)?;
-        result.events.push(ArenaEvent::Base(Event::Hit {
+        events.push(ArenaEvent::Base(Event::Hit {
             attacker,
             target,
             damage,
         }));
-        if !c.throw && effect.armor_used < armor[c.target] {
+        if !throw && effect.armor_used < armor[c.target] {
             effect.armor_used += 1;
-            result.events.push(ArenaEvent::Armored { attacker, target });
+            events.push(ArenaEvent::Armored { attacker, target });
         } else {
             effect.took_hit = true;
-            effect.hitstun = effect.hitstun.max(c.attack.hitstun);
-            let offset = i64::from(c.facing) * i64::from(c.attack.pushback);
+            effect.hitstun = effect.hitstun.max(rules.base.hitstun);
+            let offset = i64::from(c.facing) * i64::from(rules.base.pushback);
             effect.push = effect.push.checked_add(offset).ok_or(DuelError::Overflow)?;
         }
     }
-    Ok(result)
+    Ok(impacts)
 }
