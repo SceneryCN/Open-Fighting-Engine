@@ -99,6 +99,17 @@ class Validation(unittest.TestCase):
         with self.assertRaisesRegex(ofe.Invalid, "#/screens/pause/1/id"):
             ofe.validate(self.project)
 
+    def test_integer_uses_exact_decimal_value(self):
+        attributes = self.root / "character/attributes.json"
+        for token in ("1", "1.0", "10e-1", "0.1e1", "2147483647.0000000"):
+            with self.subTest(token=token):
+                attributes.write_text('{"max_health":' + token + ',"max_energy":0}')
+                ofe.validate(self.project)
+        for token in ("1.00000000000000000001", "2147483647.00000001", "1e-400", "2147483648.0"):
+            with self.subTest(token=token), self.assertRaisesRegex(ofe.Invalid, "#/max_health"):
+                attributes.write_text('{"max_health":' + token + ',"max_energy":0}')
+                ofe.validate(self.project)
+
     def test_strict_json_and_shape(self):
         for payload in ['{"format":"OGP","format":"OFA"}', '{"x":NaN}', '{"x":1e400}', '[]']:
             with self.subTest(payload=payload), self.assertRaises(ofe.Invalid):

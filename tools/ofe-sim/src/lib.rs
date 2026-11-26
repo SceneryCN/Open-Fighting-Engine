@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Configuration adapter for the simulator's two schema-validated OFC fixtures.
+mod json_integer;
 use ofe_combat_core::Position;
 use ofe_combat_core::duel::{AttackConfig, DuelConfig, FighterConfig, LaneConfig, LaneRule, Rect};
 use serde::{Deserialize, de::DeserializeOwned};
@@ -46,26 +47,40 @@ struct Manifest {
 
 #[derive(Deserialize)]
 struct Attributes {
+    #[serde(deserialize_with = "json_integer::read")]
     max_health: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     max_energy: i32,
 }
 
 #[derive(Deserialize)]
 struct Move {
     id: String,
+    #[serde(deserialize_with = "json_integer::read")]
     startup: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     active: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     recovery: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     damage: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     hitstun: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     blockstun: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     hitstop: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     armor: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     energy_cost: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     invulnerability: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     pushback: i32,
     cancel_windows: Vec<Bounds>,
     lane_rule: String,
+    #[serde(default, deserialize_with = "json_integer::optional")]
     depth_range: Option<i32>,
 }
 
@@ -112,9 +127,13 @@ struct BoxSet {
 #[derive(Deserialize)]
 struct LocalBox {
     kind: String,
+    #[serde(deserialize_with = "json_integer::read")]
     x: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     h: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     width: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     height: i32,
 }
 
@@ -135,24 +154,34 @@ impl BoxSet {
 
 #[derive(Deserialize)]
 struct Spawn {
+    #[serde(deserialize_with = "json_integer::read")]
     x: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     z: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     h: i32,
 }
 
 #[derive(Deserialize)]
 struct Movement {
     spawn: Spawn,
+    #[serde(deserialize_with = "json_integer::read")]
     walk_speed: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     jump_speed: i32,
+    #[serde(deserialize_with = "json_integer::read")]
     gravity: i32,
 }
 
 #[derive(Deserialize)]
 struct Lane {
+    #[serde(deserialize_with = "json_integer::read")]
     startup: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     travel: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     recovery: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     cooldown: u32,
     interruptible: bool,
 }
@@ -237,7 +266,9 @@ mod tests {
 #[derive(Deserialize, Clone, Copy)]
 #[serde(deny_unknown_fields)]
 struct Bounds {
+    #[serde(deserialize_with = "json_integer::read")]
     start: u32,
+    #[serde(deserialize_with = "json_integer::read")]
     end: u32,
 }
 

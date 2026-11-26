@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 import sys
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from pathlib import Path, PureWindowsPath
 
@@ -34,10 +35,15 @@ def unique_object(pairs):
 
 
 def finite_float(number):
-    value = float(number)
-    if not math.isfinite(value):
+    if not math.isfinite(float(number)):
         raise ValueError(f"non-finite number {number}")
-    return value
+    try:
+        value = Decimal(number)
+    except InvalidOperation as exc:
+        raise ValueError(f"invalid number {number}") from exc
+    # Draft 2020-12 defines integers by mathematical value. Binary floating
+    # point would round near-integers into integers before type checking.
+    return int(value) if value == value.to_integral_value() else value
 
 
 def read_document(path):
