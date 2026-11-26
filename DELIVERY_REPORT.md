@@ -25,7 +25,7 @@ cargo run --locked -p ofe-sim -- --mode ffa --script tools/ofe-sim/fixtures/aren
 
 ## 验证、风险及待签收项
 
-- 工作区 53 项 Rust 测试通过，包括 13 项 P2 独立黑盒测试。14 项格式测试通过。P0/P1 的 ABI、Godot 技术样例和双人接口保留独立回归证据。
-- 本机从归档解包后分别运行双人、2v2 与 FFA，双人输出与黄金样本一致。四个平台执行同一套模拟器打包、自检及 Godot 验证。[集成提交托管运行](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45788357812)
+- 工作区 56 项 Rust 测试通过，包括 16 项 P2 独立黑盒测试。14 项格式测试通过。P0/P1 的 ABI、Godot 技术样例和双人接口保留独立回归证据。
+- 本机从归档解包后分别运行双人、2v2 与 FFA，双人输出与黄金样本一致。Linux x64、Windows x64、macOS ARM64 与 macOS x64 均通过模拟器打包、自检及 Godot 回归，四套模拟器和四套 P0 导出均上传成功。[完整测试矩阵托管运行](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45788696712)
 - 四人同时产生 12 次命中的实测为 1.10 µs/帧。每帧暂存与动态接触集合增加了双人路径成本；长寿命投射物的高并发需按实际项目负载量测。[基准与复现命令](docs/p2/PERFORMANCE.md)
 - 本阶段交付终端核心验证与确定性输入脚本。投技采用接触时立即结算的规则。图形演出、通用外部角色包加载、正式游戏回合与胜负画面属于后续阶段。P3 等待项目负责人签收 P2 并授权启动。
