@@ -5,10 +5,10 @@ extends RefCounted
 # match directory. User-supplied directories are opened in place and never removed.
 var directory := ""
 
-func open_dirs() -> PackedStringArray:
+func open_dirs(roster := PackedStringArray(["amber", "indigo"])) -> PackedStringArray:
 	var result := PackedStringArray()
 	var options := OS.get_cmdline_user_args()
-	for slot in [1, 2]:
+	for slot in range(1, roster.size() + 1):
 		var prefix := "--p%d-dir=" % slot
 		var override := ""
 		for arg in options:
@@ -24,8 +24,13 @@ func open_dirs() -> PackedStringArray:
 			if DirAccess.make_dir_absolute(directory) != OK:
 				directory = ""
 				return PackedStringArray()
-		var actor := "amber" if slot == 1 else "indigo"
+		var actor := roster[slot - 1]
+		if actor not in ["amber", "indigo"]:
+			return PackedStringArray()
 		var folder := directory.path_join(actor)
+		if folder in result:
+			result.append(folder)
+			continue
 		var zip := ZIPReader.new()
 		if zip.open("res://match/%s.ofc" % actor) != OK:
 			return PackedStringArray()

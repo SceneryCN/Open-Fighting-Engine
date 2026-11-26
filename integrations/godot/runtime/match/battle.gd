@@ -41,26 +41,29 @@ func _setup() -> void:
 			var action := StringName("p%d_%s" % [i + 1, suffixes[n]])
 			_bind(action, keys[i][n])
 			_actions[i].append(action)
-		var shadow := Polygon2D.new()
-		var points := PackedVector2Array()
-		for n in range(24):
-			var angle := n * TAU / 24.0
-			points.append(Vector2(cos(angle) * 40, sin(angle) * 6))
-		shadow.polygon = points
-		shadow.color = Color("#243a40bc")
-		$Actors.add_child(shadow)
-		shadows.append(shadow)
-		var sprite := Sprite2D.new()
-		sprite.centered = false
-		sprite.region_enabled = true
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		$Actors.add_child(sprite)
-		sprites.append(sprite)
+		_add_fighter_nodes()
 	_bind(&"match_restart", KEY_R)
 	health_bars = $HUD.bars
 	audio = $Audio
 	_sounds["Hit"] = _tone(180.0, 47.0, 0.115)
 	_sounds["Blocked"] = _tone(470.0, 140.0, 0.085)
+
+func _add_fighter_nodes() -> void:
+	var shadow := Polygon2D.new()
+	var points := PackedVector2Array()
+	for n in range(24):
+		var angle := n * TAU / 24.0
+		points.append(Vector2(cos(angle) * 40, sin(angle) * 6))
+	shadow.polygon = points
+	shadow.color = Color("#243a40bc")
+	$Actors.add_child(shadow)
+	shadows.append(shadow)
+	var sprite := Sprite2D.new()
+	sprite.centered = false
+	sprite.region_enabled = true
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	$Actors.add_child(sprite)
+	sprites.append(sprite)
 
 func _bind(action: StringName, code: Key) -> void:
 	if InputMap.has_action(action):
@@ -127,11 +130,17 @@ func _present() -> bool:
 	current = match_instance.snapshot()
 	if current.get("status", -1) != 0 or current.fighters.size() != 2:
 		return _fail("Could not read the match snapshot.")
-	var a: float = current.fighters[0].x
-	var b: float = current.fighters[1].x
-	_camera_x = (a + b) * 0.5
-	_unit = minf(25.0, 756.0 / maxf(1.0, absf(b - a)))
-	for i in range(2):
+	return _render_snapshot()
+
+func _render_snapshot() -> bool:
+	var left := float(current.fighters[0].x)
+	var right := left
+	for fighter in current.fighters:
+		left = minf(left, fighter.x)
+		right = maxf(right, fighter.x)
+	_camera_x = (left + right) * 0.5
+	_unit = minf(25.0, 756.0 / maxf(1.0, right - left))
+	for i in range(current.fighters.size()):
 		var f: Dictionary = current.fighters[i]
 		var anim: Dictionary = f.animation
 		var id := int(anim.image_id)
