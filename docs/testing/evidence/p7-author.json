@@ -1,0 +1,61 @@
+{
+  "platform": "macOS 27.3 ARM64 / Apple M1 Max",
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "renderer": "OpenGL 4.1 Metal Compatibility",
+  "regressions": {
+    "rust": {
+      "passed": 85,
+      "failed": 0,
+      "ignored": 2,
+      "release_reruns_of_ignored": 2
+    },
+    "CTest": 3,
+    "format_tests": 16,
+    "P3_tests": 8,
+    "editor": [
+      "OFE_REENTRY_PASS",
+      "OFE_P4_EXTERNAL_PASS",
+      "OFE_P0_PASS",
+      "OFE_P4_PASS",
+      "OFE_P5_PASS",
+      "OFE_P6_RECORDED 25",
+      "OFE_P6_PASS",
+      "verified 25 frames, final frame 25, hash 37639bfe3db9acfd",
+      "OFE_P6_PASS"
+    ],
+    "export": [
+      "OFE_P0_PASS",
+      "OFE_P4_PASS",
+      "OFE_P5_PASS",
+      "OFE_P6_RECORDED 25",
+      "OFE_P6_PASS",
+      "verified 25 frames, final frame 25, hash 37639bfe3db9acfd",
+      "OFE_P6_PASS"
+    ]
+  },
+  "author_pipeline": {
+    "editor": [
+      "OFE_P7_BATTLE actors=QA_Rook,QA_Echo hp=137,90 damage=23 origin=9,17",
+      "OFE_P7_PASS",
+      "OFE_P7_PASS_EXTERNAL generated_files=10 rejected_launches=6 launch_to_child_ms=429.2 launch_to_exit_ms=4064.7"
+    ],
+    "export_from_extracted_archives": [
+      "OFE_P7_BATTLE actors=QA_Rook,QA_Echo hp=137,90 damage=23 origin=9,17",
+      "OFE_P7_PASS",
+      "OFE_P7_PASS_EXTERNAL generated_files=10 rejected_launches=6 launch_to_child_ms=456.6 launch_to_exit_ms=2463.5"
+    ]
+  },
+  "windowed_pacing": {
+    "warmup": 120,
+    "results": {
+      "display": "macOS",
+      "draw_max_us": 23728,
+      "draw_p95_us": 19805,
+      "draw_p99_us": 20986,
+      "fps": 59.9832166959685,
+      "over_25ms": 0,
+      "samples": 600,
+      "simulation_ticks": 600.0
+    }
+  }
+}
