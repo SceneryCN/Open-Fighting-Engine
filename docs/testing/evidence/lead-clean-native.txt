@@ -1,0 +1,14 @@
+-- The C compiler identification is AppleClang 21.0.0.21000401
+-- The CXX compiler identification is AppleClang 21.0.0.21000401
+[69/70] Linking CXX shared library libofe_godot.dylib
+Test project /tmp/ofe-lead-source.ctrVdg/build/check
+1/1 Test #1: abi_smoke ........................   Passed    0.35 sec
+100% tests passed out of 1
+-- Installing: /tmp/ofe-lead-source.ctrVdg/integrations/godot/runtime/bin/libofe_godot.dylib
++ /Applications/Godot.app/Contents/MacOS/Godot --headless --path /private/tmp/ofe-lead-source.ctrVdg/integrations/godot/runtime --editor --import
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+[ DONE ] first_scan_filesystem
+[ DONE ] loading_editor_layout
++ /Applications/Godot.app/Contents/MacOS/Godot --headless --path /private/tmp/ofe-lead-source.ctrVdg/integrations/godot/runtime -- --p0-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OFE_P0_PASS

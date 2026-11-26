@@ -1,0 +1,60 @@
+    Checking ofe-combat-core v0.1.0 (/Users/evolte/Desktop/Open Fighting Engine/engine/combat-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.81s
+   Compiling ofe-combat-core v0.1.0 (/Users/evolte/Desktop/Open Fighting Engine/engine/combat-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.78s
+     Running unittests src/lib.rs (target/debug/build/ofe-bridge/f87a5987248d99a1/out/ofe_bridge-f87a5987248d99a1)
+
+running 2 tests
+test tests::concurrent_battles_have_independent_state_and_lifetimes ... ok
+test tests::short_read_only_needs_initialized_size_prefix ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/ofe-combat-core/b1674de57148e25c/out/ofe_combat_core-b1674de57148e25c)
+
+running 2 tests
+test tests::input_errors_preserve_pending_input ... ok
+test tests::overflow_is_atomic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/determinism.rs (target/debug/build/ofe-combat-core/a8c002cbc7c7060b/out/determinism-a8c002cbc7c7060b)
+
+running 2 tests
+test restore_rejects_inconsistent_external_state ... ok
+test replay_from_queued_snapshot_matches_each_tick ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hash_vectors.rs (target/debug/build/ofe-combat-core/e173cecf01ad07ff/out/hash_vectors-e173cecf01ad07ff)
+
+running 1 test
+test snapshot_hash_matches_known_vectors ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ofe_bridge
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ofe_combat_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+────────────
+ Nextest run ID acd56ded-c2ee-4cb2-ae60-53b356c67ae0 with nextest profile: default
+    Starting 7 tests across 4 binaries
+        PASS [   0.028s] (1/7) ofe-combat-core tests::input_errors_preserve_pending_input
+        PASS [   0.029s] (2/7) ofe-combat-core tests::overflow_is_atomic
+        PASS [   0.030s] (3/7) ofe-combat-core::determinism replay_from_queued_snapshot_matches_each_tick
+        PASS [   0.031s] (4/7) ofe-combat-core::hash_vectors snapshot_hash_matches_known_vectors
+        PASS [   0.033s] (5/7) ofe-bridge tests::concurrent_battles_have_independent_state_and_lifetimes
+        PASS [   0.034s] (6/7) ofe-bridge tests::short_read_only_needs_initialized_size_prefix
+        PASS [   0.039s] (7/7) ofe-combat-core::determinism restore_rejects_inconsistent_external_state
+────────────
+     Summary [   0.042s] 7 tests run: 7 passed, 0 skipped
