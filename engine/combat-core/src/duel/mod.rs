@@ -53,7 +53,7 @@ impl Duel {
         Ok(Self {
             fighters: std::array::from_fn(|i| arena.fighters()[i].fighter),
             arena,
-            events: Vec::new(),
+            events: Vec::with_capacity(8),
         })
     }
 

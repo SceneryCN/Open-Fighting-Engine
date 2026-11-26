@@ -96,6 +96,10 @@ pub(super) fn next_id(last: &mut u64) -> Result<u64, DuelError> {
 }
 
 impl Timers {
+    pub(super) fn is_idle(&self) -> bool {
+        matches!(self.action, Action::Free) && self.cooldown == 0 && self.velocity == 0
+    }
+
     pub(super) fn protected(&self, config: &CombatantConfig) -> bool {
         matches!(self.action, Action::Attack(a) if a.age <= u64::from(config.moves[a.index].invulnerability))
     }
