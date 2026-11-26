@@ -1,0 +1,12 @@
+Open Fighting Engine licensing notice
+
+Original engine, tools, integration, build scripts and accompanying technical
+documentation: Mozilla Public License 2.0 (LICENSES/MPL-2.0.txt).
+Native data format specifications, schemas and original synthetic data fixtures:
+CC0 1.0 Universal (LICENSES/CC0-1.0.txt).
+Original SDK and example character code, if introduced under the charter:
+MIT (LICENSES/MIT.txt).
+
+These terms cover original OFE contributions. Third-party components keep
+their own license and attribution notices. The project charter records the
+owner's requirements. See LICENSE_AUDIT.md before redistributing artifacts.
