@@ -122,6 +122,23 @@ fn sequence_and_sheet_display_exact_frames_and_enter_events() {
             let pkg = with_clip(kind, looping);
             let mut store = ResourceStore::open(&pkg.0).unwrap();
             let clip = Clip::load(&mut store, "clips/motion.json").unwrap();
+            let first = &clip.frames()[0];
+            assert_eq!((first.origin.x, first.origin.y), (-3, 1));
+            assert_eq!(first.image_path, "grid.png");
+            assert!(Arc::ptr_eq(&first.image, &clip.frames()[2].image));
+            let bounds: Vec<_> = clip
+                .frames()
+                .iter()
+                .map(|f| {
+                    let r = f.source_rect;
+                    (r.x, r.y, r.width, r.height)
+                })
+                .collect();
+            if kind == "sheet" {
+                assert_eq!(bounds, [(2, 2, 2, 2), (4, 0, 2, 2), (0, 2, 2, 2)]);
+            } else {
+                assert_eq!(bounds, [(0, 0, 6, 4); 3]);
+            }
             let mut player = Player::new(&clip);
             assert_eq!(player.frame_index(), 0);
             assert!(!player.finished());

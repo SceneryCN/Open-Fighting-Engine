@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from zipfile import ZIP_STORED, ZipFile, ZipInfo
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[2]
 CLI = ROOT / "tools/ofe-validator/ofe.py"
@@ -84,9 +84,9 @@ class ExternalPackage(unittest.TestCase):
         self.cli("validate", self.package)
         metadata = json.loads(self.cli("inspect", self.source).stdout)
         self.assertEqual(metadata, json.loads(self.cli("inspect", self.package).stdout))
-        serialized = json.dumps(metadata)
-        for field in ("qa_external", "OFE QA", "CC0-1.0", "first", "second", "wait"):
-            self.assertIn(field, serialized)
+        for key, value in {"id": "qa_external", "author": "OFE QA", "license": "CC0-1.0",
+                           "moves": ["first", "second"], "animations": ["wait"]}.items():
+            self.assertEqual(metadata[key], value)
 
     def test_external_changes_affect_fights_without_rebuild(self):
         self.assertTrue(SIM.is_file(), f"build the release simulator or set OFE_SIM: {SIM}")
@@ -138,6 +138,21 @@ class ExternalPackage(unittest.TestCase):
                     archive.writestr(entry, "stats.json")
                 self.cli("validate", self.package, status=1)
                 self.assertFalse((self.temp / "outside.txt").exists())
+
+    def test_zip_member_count_and_individual_limit(self):
+        self.pack()
+        previous = self.package.read_bytes()
+        with ZipFile(self.package, "a") as archive:
+            for index in range(4097 - len(archive.namelist())):
+                archive.writestr(f"extra/{index}", b"")
+        self.assertIn("members", self.cli("validate", self.package, status=1).stderr.lower())
+        self.package.write_bytes(previous)
+        with ZipFile(self.package, "a", ZIP_DEFLATED) as archive, archive.open("oversized.bin", "w") as stream:
+            block = bytes(1 << 20)
+            for _ in range(64):
+                stream.write(block)
+            stream.write(b"x")
+        self.assertIn("size", self.cli("validate", self.package, status=1).stderr.lower())
 
     def test_invalid_profile_and_missing_local_references(self):
         path = self.source / "moves/a.json"
