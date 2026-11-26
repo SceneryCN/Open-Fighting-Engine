@@ -8,7 +8,7 @@ fn foundation(c: &mut Criterion) {
         b.iter(|| {
             let frame = battle.snapshot().frame + 1;
             battle
-                .submit(frame, if frame % 2 == 0 { 1 } else { -1 })
+                .submit(frame, if frame.is_multiple_of(2) { 1 } else { -1 })
                 .unwrap();
             battle.step().unwrap();
             black_box(battle.movement_event());
