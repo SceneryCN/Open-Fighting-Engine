@@ -59,6 +59,7 @@ jobs:
       - name: Test duels, teams and free-for-all, then package simulator
         shell: bash
         run: |
+          rustup component add rust-docs
           cargo test --locked -p ofe-combat-core -p ofe-sim
           cargo build --locked --release -p ofe-sim
           suffix=""
@@ -109,6 +110,9 @@ jobs:
     needs: [quality, proof]
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - uses: actions/download-artifact@v8
         with:
           pattern: ofe-*
