@@ -1,5 +1,5 @@
 # OFE 项目状态 · 2026-11-26
 
-项目负责人已签收 P0、P1，并授权在 P0 至 P2 复核问题解决后启动 P3。复核修复了场景重入和数值加载问题，独立 QA 核对了优化前后的战斗结果。[复核记录](docs/testing/P0_P2_REVIEW.md) · [原 P2 交付报告](docs/p2/DELIVERY_REPORT.md)
+负责人授权继续 P4。P4 Godot Runtime 已实现，状态 TESTING，最终签收由负责人决定。默认 Godot 主场景支持双人键盘对战、独立外部角色、OFA 帧显示、HUD、命中与格挡音效和重开。P5 Demo Game 尚未启动。
 
-P3 Character & Animation Runtime 已实现，状态 TESTING。本机独立 QA 的 73 项 Rust 测试、15 项格式测试、8 项端到端 CLI 测试均通过。ADR-006 冻结角色目录、ZIP 归档、动画时序、资源缓存和模拟器入口。P3 最终签收由项目负责人决定。P4 尚未启动。[公共契约](docs/architecture/ADR-006.md) · [使用外部角色](docs/p3/CHARACTERS.md)
+[运行方法](docs/p4/RUNTIME.md) · [P4 交付](DELIVERY_REPORT.md) · [P3 交付归档](docs/p3/DELIVERY_REPORT.md) · [P0 至 P2 复核](docs/testing/P0_P2_REVIEW.md)

@@ -35,7 +35,7 @@ python3 scripts/test/headless.py "$GODOT"
 "$GODOT" --path integrations/godot/runtime
 ```
 
-自检成功打印 OFE_P0_PASS 并以 0 退出。脚本检验 Godot 版本、导入过程与运行结果。若缺少扩展类，检查安装目录、CPU 架构和导入日志；导入失败时保留首次日志以便重现。打开图形窗口后可观察 Frame 持续递增。按住左键或右键，圆点每个模拟帧沿 X 移动一个单位，松开后位置保持。Z 和 H 在技术样例中为 0。
+源码自检会依次验证首次导入、P0 重入、外部角色目录、P0 与 P4 默认场景，最后输出 OFE_P4_PASS。缺少扩展类时检查安装目录、CPU 架构和导入日志。普通启动会进入双人键盘对战，按 F 让 P1 普攻，按 R 重开。单独启动旧桥接样例可运行 `"$GODOT" --path integrations/godot/runtime res://proof.tscn`。[完整按键与角色路径](../p4/RUNTIME.md)
 
 ## 测试与基准
 
