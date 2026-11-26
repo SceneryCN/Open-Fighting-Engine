@@ -11,7 +11,7 @@ impl Rect {
         self.width > 0 && self.height > 0
     }
 
-    fn bounds(self, owner: Fighter) -> [i64; 4] {
+    pub(super) fn bounds(self, owner: Fighter) -> [i64; 4] {
         // Intermediate geometry can extend past the representable center coordinates.
         let origin = i64::from(owner.position.x);
         let x = i64::from(self.x);
@@ -27,7 +27,7 @@ impl Rect {
 }
 
 impl LaneRule {
-    fn allows(self, a: i32, b: i32) -> bool {
+    pub(super) fn allows(self, a: i32, b: i32) -> bool {
         match self {
             Self::SameLane => nearest(a) == nearest(b),
             Self::CrossLane => nearest(a) != nearest(b),
@@ -59,19 +59,6 @@ impl AttackConfig {
             && !matches!(self.lane_rule, LaneRule::DepthRange(n) if n < 0)
     }
 }
-pub(super) fn intersects(
-    striker: Fighter,
-    target: Fighter,
-    attack: AttackConfig,
-    hurt: Rect,
-) -> bool {
-    if !attack
-        .lane_rule
-        .allows(striker.position.z, target.position.z)
-    {
-        return false;
-    }
-    let a = attack.hitbox.bounds(striker);
-    let b = hurt.bounds(target);
+pub(super) fn overlaps(a: [i64; 4], b: [i64; 4]) -> bool {
     a[0] < b[1] && b[0] < a[1] && a[2] < b[3] && b[2] < a[3]
 }

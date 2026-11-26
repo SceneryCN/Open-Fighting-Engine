@@ -71,6 +71,7 @@ struct Flight {
     facing: i32,
     spent: u8,
     remaining: u32,
+    speed: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -83,6 +84,7 @@ struct World {
     last_id: u64,
 }
 
+#[derive(Debug, Clone)]
 struct Spawn {
     id: EntityId,
     move_index: usize,
@@ -91,6 +93,7 @@ struct Spawn {
     facing: i32,
 }
 
+#[derive(Debug, Clone)]
 struct FrameEffects {
     events: Vec<ArenaEvent>,
     spawn: Vec<Spawn>,
@@ -104,6 +107,11 @@ pub struct Arena {
     world: World,
     frame: u64,
     events: Vec<ArenaEvent>,
+    // Scratch is reset from committed data before every attempt, including retries.
+    staging: World,
+    effects: FrameEffects,
+    contacts: Vec<Contact>,
+    idle: bool,
 }
 
 fn facing(actors: &[ArenaFighter], i: usize) -> i32 {
@@ -179,11 +187,27 @@ impl Arena {
             projectiles: Vec::new(),
             last_id: 0,
         };
+        let n = world.fighters.len();
+        // Ordinary melee can generate one directed contact per opposing pair. Projectile-heavy
+        // frames grow these reusable buffers on demand; capacity is never a gameplay limit.
+        let contact_capacity = n * (n - 1);
+        let event_capacity = 2 * contact_capacity + 6 * n;
         Ok(Self {
             config,
+            idle: world
+                .fighters
+                .iter()
+                .all(|v| v.fighter.state == State::Idle),
+            staging: world.clone(),
+            effects: FrameEffects {
+                events: Vec::with_capacity(event_capacity),
+                spawn: Vec::with_capacity(n),
+                last_id: 0,
+            },
+            contacts: Vec::with_capacity(contact_capacity),
             world,
             frame: 0,
-            events: Vec::new(),
+            events: Vec::with_capacity(event_capacity),
         })
     }
 
@@ -210,6 +234,11 @@ impl Arena {
         if self.frame.checked_add(1).ok_or(DuelError::Overflow)? != frame {
             return Err(DuelError::WrongFrame);
         }
+        if self.idle && inputs.is_empty() {
+            self.events.clear();
+            self.frame = frame;
+            return Ok(());
+        }
         let mut commands = [None; 4];
         for command in inputs {
             let i = self
@@ -228,12 +257,23 @@ impl Arena {
             commands[i] = Some(*command);
         }
 
-        let mut world = self.world.clone();
-        let mut effects = FrameEffects {
-            events: Vec::new(),
-            spawn: Vec::new(),
-            last_id: world.last_id,
-        };
+        if self.idle
+            && inputs
+                .iter()
+                .all(|c| c.controls == Default::default() && !c.dash && c.move_index.is_none())
+        {
+            self.events.clear();
+            self.frame = frame;
+            return Ok(());
+        }
+        let world = &mut self.staging;
+        world.fighters.copy_from_slice(&self.world.fighters);
+        world.timers.copy_from_slice(&self.world.timers);
+        world.combos = self.world.combos;
+        let effects = &mut self.effects;
+        effects.events.clear();
+        effects.spawn.clear();
+        effects.last_id = self.world.last_id;
         let mut active = [None; 4];
         for (i, actor) in world.fighters.iter_mut().enumerate() {
             let command = commands[i].unwrap_or(Command {
@@ -246,20 +286,29 @@ impl Arena {
                 self.config.lane,
                 command,
                 facing(&self.world.fighters, i),
-                &mut effects,
+                effects,
             )?;
         }
-        world.advance_projectiles(&self.config, &mut effects)?;
-        let mut contacts = world.contacts(&self.config, active);
-        let armor = world.timers.iter().map(Timers::armor).collect::<Vec<_>>();
-        let immune = world
-            .timers
-            .iter()
-            .zip(&self.config.fighters)
-            .map(|(t, c)| t.protected(c))
-            .collect::<Vec<_>>();
-        let resolution = resolve::resolve(&world.fighters, &armor, &immune, &mut contacts)?;
-        world.apply(&self.config, &contacts, resolution, &mut effects.events)?;
+        world.advance_projectiles(&self.world, &self.config, effects)?;
+        self.contacts.clear();
+        if !world.projectiles.is_empty() || active.iter().any(Option::is_some) {
+            world.contacts(&self.config, active, &mut self.contacts);
+        }
+        world.clear_expired_combos();
+        if !self.contacts.is_empty() {
+            let mut armor = [0; 4];
+            for (i, t) in world.timers.iter().enumerate() {
+                armor[i] = t.armor();
+            }
+            let impacts = resolve::resolve(
+                &world.fighters,
+                &self.config,
+                &armor,
+                &mut self.contacts,
+                &mut effects.events,
+            )?;
+            world.apply(&self.config, &self.contacts, &impacts)?;
+        }
         for (old, new) in self.world.fighters.iter().zip(&world.fighters) {
             let id = new.fighter.id;
             if new.fighter.state == State::Ko && old.fighter.state != State::Ko {
@@ -281,8 +330,12 @@ impl Arena {
             }
         }
         world.last_id = effects.last_id;
-        self.world = world;
-        self.events = effects.events;
+        self.idle = world.projectiles.is_empty()
+            && world.fighters.iter().zip(&world.timers).all(|(v, t)| {
+                v.fighter.state == State::Idle && v.hitstop == 0 && v.combo == 0 && t.is_idle()
+            });
+        std::mem::swap(&mut self.world, world);
+        std::mem::swap(&mut self.events, &mut effects.events);
         self.frame = frame;
         Ok(())
     }
@@ -295,34 +348,34 @@ struct Source {
     window: usize,
     spent: u8,
     body: Fighter,
+    projectile: Option<usize>,
 }
 
 impl World {
     fn advance_projectiles(
         &mut self,
+        previous: &World,
         config: &ArenaConfig,
         effects: &mut FrameEffects,
     ) -> Result<(), DuelError> {
-        let mut kept = 0;
-        for i in 0..self.flights.len() {
-            let mut flight = self.flights[i];
+        self.flights.clear();
+        self.projectiles.clear();
+        // Write survivors directly into next-frame storage in stable ID order. Previous storage
+        // remains untouched for rollback; each survivor is copied exactly once.
+        for (mut flight, mut projectile) in previous
+            .flights
+            .iter()
+            .copied()
+            .zip(previous.projectiles.iter().copied())
+        {
             if flight.remaining == 0 {
                 continue;
             }
-            let MoveKind::Projectile { speed, .. } =
-                config.fighters[flight.owner].moves[flight.move_index].kind
-            else {
-                unreachable!("validated projectile")
-            };
-            let mut projectile = self.projectiles[i];
-            shift(&mut projectile.position.x, i64::from(speed * flight.facing))?;
+            shift(&mut projectile.position.x, i64::from(flight.speed))?;
             flight.remaining -= 1;
-            self.flights[kept] = flight;
-            self.projectiles[kept] = projectile;
-            kept += 1;
+            self.flights.push(flight);
+            self.projectiles.push(projectile);
         }
-        self.flights.truncate(kept);
-        self.projectiles.truncate(kept);
         for Spawn {
             id,
             move_index,
@@ -335,7 +388,7 @@ impl World {
                 .fighters
                 .binary_search_by_key(&id, |f| f.fighter.id)
                 .expect("known caster");
-            let MoveKind::Projectile { lifetime, .. } =
+            let MoveKind::Projectile { lifetime, speed } =
                 config.fighters[owner].moves[move_index].kind
             else {
                 unreachable!("projectile source")
@@ -348,6 +401,7 @@ impl World {
                 facing,
                 spent: 0,
                 remaining: lifetime - 1,
+                speed: speed * facing,
             });
             self.projectiles.push(Projectile {
                 id: projectile_id,
@@ -362,19 +416,40 @@ impl World {
         Ok(())
     }
 
-    fn contacts(&self, config: &ArenaConfig, active: [Option<usize>; 4]) -> Vec<Contact> {
-        let mut contacts = Vec::new();
+    fn contacts(
+        &self,
+        config: &ArenaConfig,
+        active: [Option<usize>; 4],
+        contacts: &mut Vec<Contact>,
+    ) {
+        let mut hurt = [[0; 4]; 4];
+        let mut enemies = [0u8; 4];
+        for (j, defender) in self.fighters.iter().enumerate() {
+            if defender.fighter.state == State::Ko || self.timers[j].protected(&config.fighters[j])
+            {
+                continue;
+            }
+            hurt[j] = config.fighters[j].base.hurtbox.bounds(defender.fighter);
+            for (i, attacker) in self.fighters.iter().enumerate() {
+                if defender.team != attacker.team {
+                    enemies[i] |= 1 << j;
+                }
+            }
+        }
         let mut collect = |s: Source| {
-            let rules = &config.fighters[s.owner].moves[s.move_index];
-            for (j, defender) in self.fighters.iter().enumerate() {
-                if s.spent & (1 << j) == 0
-                    && self.fighters[s.owner].team != defender.team
-                    && geometry::intersects(
-                        s.body,
-                        defender.fighter,
-                        rules.base,
-                        config.fighters[j].base.hurtbox,
-                    )
+            let mut candidates = enemies[s.owner] & !s.spent;
+            if candidates == 0 {
+                return;
+            }
+            let attack = config.fighters[s.owner].moves[s.move_index].base;
+            let hit = attack.hitbox.bounds(s.body);
+            while candidates != 0 {
+                let j = candidates.trailing_zeros() as usize;
+                candidates &= candidates - 1;
+                if geometry::overlaps(hit, hurt[j])
+                    && attack
+                        .lane_rule
+                        .allows(s.body.position.z, self.fighters[j].fighter.position.z)
                 {
                     contacts.push(Contact {
                         attacker: s.owner,
@@ -382,9 +457,9 @@ impl World {
                         instance: s.instance,
                         window: s.window,
                         facing: s.body.facing,
-                        attack: rules.base,
-                        hitstop: rules.hitstop,
-                        throw: rules.kind == MoveKind::Throw,
+                        move_index: s.move_index,
+                        projectile: s.projectile,
+                        blocked: false,
                     });
                 }
             }
@@ -400,10 +475,11 @@ impl World {
                     window,
                     spent: a.spent,
                     body: self.fighters[owner].fighter,
+                    projectile: None,
                 });
             }
         }
-        for (p, f) in self.projectiles.iter().zip(&self.flights) {
+        for (index, (p, f)) in self.projectiles.iter().zip(&self.flights).enumerate() {
             let body = Fighter {
                 position: p.position,
                 facing: f.facing,
@@ -416,30 +492,43 @@ impl World {
                 window: 0,
                 spent: f.spent,
                 body,
+                projectile: Some(index),
             });
         }
-        contacts
+    }
+
+    fn clear_expired_combos(&mut self) {
+        let mut expired = 0u8;
+        for (j, target) in self.fighters.iter().enumerate() {
+            if target.fighter.state != State::Hitstun {
+                expired |= 1 << j;
+            }
+        }
+        if expired == 0 {
+            return;
+        }
+        for (v, row) in self.fighters.iter_mut().zip(&mut self.combos) {
+            if v.combo == 0 {
+                continue;
+            }
+            for (j, count) in row.iter_mut().enumerate() {
+                if expired & (1 << j) != 0 {
+                    *count = 0;
+                }
+            }
+            v.combo = *row.iter().max().expect("fixed four slots");
+        }
     }
 
     fn apply(
         &mut self,
         config: &ArenaConfig,
         contacts: &[Contact],
-        result: resolve::ContactResult,
-        events: &mut Vec<ArenaEvent>,
+        impacts: &[resolve::Impact; 4],
     ) -> Result<(), DuelError> {
-        // An opponent who escaped hitstun before settlement starts a fresh combo.
-        for (j, target) in self.fighters.iter().enumerate() {
-            if target.fighter.state != State::Hitstun {
-                for row in &mut self.combos {
-                    row[j] = 0;
-                }
-            }
-        }
-        for (i, blocked) in result.resolved {
-            let c = contacts[i];
+        for c in contacts {
             let mut cast = c.instance;
-            if let Ok(p) = self.projectiles.binary_search_by_key(&c.instance, |p| p.id) {
+            if let Some(p) = c.projectile {
                 self.flights[p].spent |= 1 << c.target;
                 cast = self.flights[p].cast;
             }
@@ -449,16 +538,14 @@ impl World {
                 if c.instance == cast {
                     a.spent |= 1 << c.target;
                 }
-                a.confirmed |= !blocked;
+                a.confirmed |= !c.blocked;
             }
-            if !blocked {
+            if !c.blocked {
                 let combo = &mut self.combos[c.attacker][c.target];
                 *combo = combo.checked_add(1).ok_or(DuelError::Overflow)?;
             }
         }
-        events.extend(result.events);
-        for (i, impact) in result.impacts.into_iter().enumerate() {
-            let view = &mut self.fighters[i];
+        for (i, (view, impact)) in self.fighters.iter_mut().zip(impacts).enumerate() {
             view.combo = *self.combos[i].iter().max().expect("fixed four slots");
             view.hitstop = view.hitstop.max(impact.hitstop);
             view.fighter.health = (i64::from(view.fighter.health) - impact.damage).max(0) as i32;
