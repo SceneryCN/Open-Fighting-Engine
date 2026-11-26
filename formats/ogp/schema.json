@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ofe:ogp:1.0",
+  "type": "object",
+  "required": [
+    "format",
+    "format_version",
+    "id",
+    "title",
+    "characters",
+    "stages",
+    "layout",
+    "audio",
+    "fonts",
+    "theme",
+    "modes",
+    "settings",
+    "dependencies"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "OGP"
+    },
+    "format_version": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "x-ofe-resource": "OFC"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "x-ofe-resource": "file"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "layout": {
+      "type": "string",
+      "minLength": 1,
+      "x-ofe-resource": "OFL"
+    },
+    "audio": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "x-ofe-resource": "file"
+      },
+      "uniqueItems": true
+    },
+    "fonts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "x-ofe-resource": "file"
+      },
+      "uniqueItems": true
+    },
+    "theme": {
+      "type": "string",
+      "minLength": 1,
+      "x-ofe-resource": "file"
+    },
+    "modes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "training",
+          "1v1",
+          "2v2",
+          "ffa"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "settings": {
+      "type": "object",
+      "required": [
+        "simulation_hz",
+        "depth_projection"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "simulation_hz": {
+          "const": 60
+        },
+        "depth_projection": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "version"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "uniqueItems": true
+    }
+  }
+}

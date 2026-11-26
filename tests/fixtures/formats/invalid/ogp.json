@@ -1,0 +1,24 @@
+{
+  "format": "OGP",
+  "format_version": "1.0",
+  "id": "proof",
+  "title": "P0 fixture",
+  "characters": [
+    "character/manifest.json"
+  ],
+  "stages": [
+    "stage.json"
+  ],
+  "layout": "layout.json",
+  "audio": [],
+  "fonts": [],
+  "theme": "theme.json",
+  "modes": [
+    "online"
+  ],
+  "settings": {
+    "simulation_hz": 60,
+    "depth_projection": 0.25
+  },
+  "dependencies": []
+}
