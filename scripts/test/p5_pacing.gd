@@ -6,6 +6,7 @@ const WARMUP := 120
 const SAMPLES := 600
 var game
 var arena
+var tape_mode := ""
 var training := false
 var physics_ticks := 0
 var frames := 0
@@ -28,7 +29,9 @@ func _start() -> void:
 		printerr("Graphical display required")
 		quit(1)
 		return
-	training = "--training" in OS.get_cmdline_user_args()
+	var args := OS.get_cmdline_user_args()
+	tape_mode = "record" if "--record" in args else ("replay" if "--replay" in args else "")
+	training = "--training" in args or not tape_mode.is_empty()
 	game = load("res://demo.tscn").instantiate()
 	root.add_child(game)
 	game._choose_mode("training" if training else "ffa")
@@ -37,6 +40,18 @@ func _start() -> void:
 	arena = game.arena
 	if training:
 		arena._training_action(1)
+	if not tape_mode.is_empty():
+		arena._training_action(7)
+		if tape_mode == "replay":
+			for tick in range(1000):
+				if tick % 48 == 1:
+					Input.action_press(&"p1_attack")
+				elif tick % 48 == 4:
+					Input.action_release(&"p1_attack")
+				arena._physics_process(1.0/60)
+			Input.action_release(&"p1_attack")
+			arena._training_action(7)
+			arena._training_action(8)
 	if arena.current.get("status", -1) != 0:
 		quit(1)
 		return
@@ -90,7 +105,7 @@ func _drawn() -> void:
 	draw_us.sort()
 	cpu_us.sort()
 	print(JSON.stringify({"display":DisplayServer.get_name(), "renderer":RenderingServer.get_current_rendering_method(),
-		"mode":arena.mode, "samples":SAMPLES, "physics_samples":cpu_us.size(), "frame":arena.current.frame,
+		"mode":arena.mode, "tape":tape_mode, "samples":SAMPLES, "physics_samples":cpu_us.size(), "frame":arena.current.frame,
 		"fps":1000000.0*SAMPLES/total, "draw_p95_us":draw_us[569], "draw_p99_us":draw_us[593],
 		"draw_max_us":draw_us[-1], "over_25ms":late, "physics_p99_us":cpu_us[ceili(cpu_us.size()*0.99)-1],
 		"physics_max_us":cpu_us[-1], "actions_started":attacks}))
