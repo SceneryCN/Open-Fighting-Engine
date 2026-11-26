@@ -1,0 +1,20 @@
+Benchmarking arena/four_idle
+Benchmarking arena/four_idle: Warming up for 1.0000 s
+Benchmarking arena/four_idle: Collecting 25 samples in estimated 2.0000 s (9.3M iterations)
+Benchmarking arena/four_idle: Analyzing
+arena/four_idle         time:   [213.49 ns 215.29 ns 219.74 ns]
+Benchmarking arena/twelve_contacts
+Benchmarking arena/twelve_contacts: Warming up for 1.0000 s
+Benchmarking arena/twelve_contacts: Collecting 25 samples in estimated 2.0003 s (987k iterations)
+Benchmarking arena/twelve_contacts: Analyzing
+arena/twelve_contacts   time:   [1.0910 µs 1.1027 µs 1.1119 µs]
+Benchmarking duel/idle_tick
+Benchmarking duel/idle_tick: Warming up for 1.0000 s
+Benchmarking duel/idle_tick: Collecting 25 samples in estimated 2.0000 s (11M iterations)
+Benchmarking duel/idle_tick: Analyzing
+duel/idle_tick          time:   [173.59 ns 176.98 ns 183.88 ns]
+Benchmarking duel/trade_tick
+Benchmarking duel/trade_tick: Warming up for 1.0000 s
+Benchmarking duel/trade_tick: Collecting 25 samples in estimated 2.0001 s (2.2M iterations)
+Benchmarking duel/trade_tick: Analyzing
+duel/trade_tick         time:   [415.18 ns 418.52 ns 422.71 ns]

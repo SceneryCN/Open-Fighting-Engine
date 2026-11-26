@@ -27,3 +27,7 @@ python -m unittest discover -s tests/formats -v
 ```
 
 合法项目将校验完整角色、动画与布局引用链。非法 OGP 在 `#/modes/0` 定位未登记的模式值 online。退出码 0 表示校验通过，1 表示输入、结构、文件或引用错误，2 表示命令参数错误。合法精灵表动画另见 tests/fixtures/formats/valid/character/animations/sheet.json。本版命令接收入口文档路径。
+
+## P2 招式补充配置
+
+OFC 1.0 描述基础帧数、伤害、硬直、击停、护甲、无敌、取消窗口与能量。P2 场景以相对路径配对 OFC 和独立的 OFE_MOVE_PROFILE 1.0 文件，补充招式种类、多段窗口、取消目标与投射物参数。校验器检查文件结构、ID 唯一性和有序窗口；模拟器在构造 Arena 前对照角色 manifest 检查 ID、取消目标及窗口是否位于相应招式时序内。[Schema](../../formats/ofe_move_profile/schema.json) · [可运行样例](../../tools/ofe-sim/fixtures/arena/move_profile.json)
