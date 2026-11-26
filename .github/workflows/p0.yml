@@ -15,8 +15,8 @@ jobs:
           clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c tests/integration/*.cpp
           python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
           python -m unittest discover -s tests/formats -v
-          python tools/ofe-validator/ofe.py validate samples/p1/characters/rook/manifest.json
-          python tools/ofe-validator/ofe.py validate samples/p1/characters/tern/manifest.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/amber/manifest.json
+          python tools/ofe-validator/ofe.py validate tools/ofe-sim/fixtures/indigo/manifest.json
       - run: |
           rustup show
           cargo fmt --all -- --check
@@ -49,9 +49,9 @@ jobs:
           suffix=""
           if [[ "$RUNNER_OS" == Windows ]]; then suffix=".exe"; fi
           sim="ofe-sim$suffix"
-          "target/release/$sim" --demo
+          "target/release/$sim" --script tools/ofe-sim/fixtures/duel.frames
           mkdir -p build
-          tar -C target/release -czf build/ofe-sim.tar.gz "$sim"
+          tar -czf build/ofe-sim.tar.gz -C "$PWD/target/release" "$sim" -C "$PWD/tools/ofe-sim/fixtures" duel.frames
       - uses: actions/upload-artifact@v4
         with:
           name: ofe-sim-${{ matrix.id }}
