@@ -96,3 +96,108 @@ impl ResourceStore {
         self.files.len()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+
+    struct Package(PathBuf);
+    impl Package {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "ofe-resource-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path).unwrap();
+            fs::create_dir(path.join("animations")).unwrap();
+            fs::write(path.join("animations/image"), b"first").unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Package {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn cache_identity_snapshot_and_reload() {
+        let package = Package::new();
+        let mut store = ResourceStore::open(&package.0).unwrap();
+        let handle = store.read("manifest.json", "animations/image").unwrap();
+        let alias = store.read("animations/idle.json", "image").unwrap();
+        assert!(Arc::ptr_eq(&handle, &alias));
+        assert_eq!(store.cached_count(), 1);
+        fs::write(package.0.join("animations/image"), b"second").unwrap();
+        assert!(Arc::ptr_eq(
+            &handle,
+            &store.read("manifest.json", "animations/image").unwrap()
+        ));
+        store.clear();
+        assert_eq!(store.cached_count(), 0);
+        let updated = store.read("animations/idle.json", "image").unwrap();
+        drop(store);
+        assert_eq!(&*handle, b"first");
+        assert_eq!(&*updated, b"second");
+    }
+
+    #[test]
+    fn reject_nonfiles_and_invalid_paths_for_both_arguments() {
+        let package = Package::new();
+        assert!(ResourceStore::open(&package.0.join("animations/image")).is_err());
+        let mut store = ResourceStore::open(&package.0).unwrap();
+        for bad in [
+            "",
+            "/etc/passwd",
+            "../image",
+            "sub/../image",
+            "./image",
+            "sub//image",
+            "C:/image",
+            "a:b",
+            "a\\b",
+            "a\u{0}b",
+            "dir/",
+        ] {
+            assert!(store.read("manifest.json", bad).is_err(), "{bad:?}");
+            assert!(store.read(bad, "animations/image").is_err(), "{bad:?}");
+        }
+        assert!(store.read("manifest.json", "animations").is_err());
+        assert!(store.read("manifest.json", "missing.png").is_err());
+        assert_eq!(store.cached_count(), 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn scoped_resolution_applies_even_after_root_cached_an_alias() {
+        use std::os::unix::fs::symlink;
+        let package = Package::new();
+        fs::write(package.0.join("root-image"), b"root").unwrap();
+        symlink("../root-image", package.0.join("animations/link")).unwrap();
+        symlink("image", package.0.join("animations/local-link")).unwrap();
+        let mut store = ResourceStore::open(&package.0).unwrap();
+        assert_eq!(
+            &*store.read("manifest.json", "animations/link").unwrap(),
+            b"root"
+        );
+        assert!(store.read("animations/idle.json", "link").is_err());
+        let image = store.read("animations/idle.json", "image").unwrap();
+        assert!(Arc::ptr_eq(
+            &image,
+            &store.read("animations/idle.json", "local-link").unwrap()
+        ));
+        assert_eq!(store.cached_count(), 2);
+
+        let other = Package::new();
+        symlink(&other.0, package.0.join("foreign")).unwrap();
+        assert!(store.read("foreign/idle.json", "animations/image").is_err());
+        assert!(
+            store
+                .read("manifest.json", "foreign/animations/image")
+                .is_err()
+        );
+    }
+}
