@@ -5,7 +5,7 @@ extends RefCounted
 func run(scene) -> void:
 	var tree: SceneTree = scene.get_tree()
 	var error: String = await _exercise(scene, tree)
-	for action in [&"p1_attack", &"p1_right", &"p1_jump", &"p2_guard"]:
+	for action in [&"p1_attack", &"p1_right", &"p1_jump", &"p2_guard", &"p1_lane"]:
 		Input.action_release(action)
 	if not error.is_empty():
 		push_error("P4 acceptance: " + error)
@@ -29,6 +29,8 @@ func _presentation(scene) -> String:
 			return "invisible or untextured fighter %d" % index
 		if sprite.region_rect != Rect2(area[0], area[1], area[2], area[3]):
 			return "displayed texture region differs from OFA for fighter %d" % index
+		if sprite.offset != -Vector2(animation.origin[0], animation.origin[1]) or signf(sprite.scale.x) != signf(fighter.facing):
+			return "sprite anchor or facing differs from native presentation"
 		if not bar.is_visible_in_tree() or bar.value != fighter.hp or bar.max_value != fighter.max_hp:
 			return "health bar differs from native health for fighter %d" % index
 	return ""
@@ -82,9 +84,18 @@ func _exercise(scene, tree: SceneTree) -> String:
 	if not scene.restart():
 		return "failed to reset after guard"
 	var screen_x: float = scene.sprites[0].global_position.x
-	Input.action_press(&"p1_right")
+	var bindings := InputMap.action_get_events(&"p1_right")
+	if bindings.is_empty() or not bindings[0] is InputEventKey:
+		return "missing physical keyboard mapping for player one"
+	var key: InputEventKey = bindings[0].duplicate()
+	key.pressed = true
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
 	await tree.physics_frame
-	Input.action_release(&"p1_right")
+	key = key.duplicate()
+	key.pressed = false
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
 	if scene.current.fighters[0].x <= initial_x or scene.sprites[0].global_position.x <= screen_x:
 		return "mapped movement did not move both simulation and sprite"
 	var screen_y: float = scene.sprites[0].global_position.y
@@ -93,6 +104,16 @@ func _exercise(scene, tree: SceneTree) -> String:
 	Input.action_release(&"p1_jump")
 	if scene.current.fighters[0].h <= 0 or scene.sprites[0].global_position.y >= screen_y:
 		return "mapped jump failed to project native height"
+	if not scene.restart():
+		return "failed to reset after jump"
+	screen_y = scene.sprites[0].global_position.y
+	Input.action_press(&"p1_lane")
+	await tree.physics_frame
+	Input.action_release(&"p1_lane")
+	for tick in range(15):
+		await tree.physics_frame
+	if scene.current.fighters[0].z == 0 or is_equal_approx(scene.sprites[0].global_position.y, screen_y):
+		return "mapped lane switch failed to project native depth"
 	var old_instance: RefCounted = scene.match_instance
 	var owner: Node = scene.get_parent()
 	owner.remove_child(scene)

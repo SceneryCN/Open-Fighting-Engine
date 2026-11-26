@@ -20,6 +20,9 @@ func _verify() -> void:
 	for tick in range(10):
 		await physics_frame
 		if arena.current.fighters[1].hp == 168 and arena.health_bars[1].value == 168:
+			await arena.audio.finished
+			arena.queue_free()
+			await process_frame
 			print("OFE_P4_EXTERNAL_PASS")
 			quit(0)
 			return
