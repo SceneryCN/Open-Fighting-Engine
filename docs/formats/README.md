@@ -35,3 +35,7 @@ OFC 1.0 描述基础帧数、伤害、硬直、击停、护甲、无敌、取消
 ## P3 角色目录与发布包
 
 作者工具的 validate 支持 OFC 目录和 .ofc ZIP，inspect 输出作者、许可、动作、动画和依赖声明。package 只收集资源引用图和可选的 move_profile.json。run 解开并校验归档，再启动本地模拟器。动画资源检查 PNG 头部尺寸、图集网格和索引。完整命令见[角色使用指南](../p3/CHARACTERS.md)。
+
+## P6 权威录像
+
+OFE_REPLAY v1 保存起始规则及快照、每个提交帧的命令与预期哈希。Schema 描述磁盘形状和基本范围；核心恢复时核对所有槽位、数组对应关系、招式索引与有效窗口。运行 `ofe-sim replay FILE` 会逐帧复算并定位首次差异。[Schema](../../formats/replay/schema.json) · [快照和哈希契约](../architecture/ADR-009.md)

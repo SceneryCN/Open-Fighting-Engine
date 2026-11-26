@@ -1,5 +1,5 @@
 # OFE 依赖清单
-核心与 ABI 仅使用标准库和本仓库代码。P1 模拟器另使用 serde、serde_json 及其依赖解析内置 OFC 样例。可运行 cargo tree -p ofe-sim -e normal 查看实际依赖树。模拟器归档随附这棵依赖树中的上游许可、样例许可与对应源码地址。Criterion 用于测试与基准。所有 Cargo 源包由 Cargo.lock 记录版本及校验和。
+P6 战斗核心使用已有锁定依赖 serde 1.0.229 和 serde_json 1.0.154 进行版本化权威快照序列化及状态哈希编码。Godot 与文件系统操作留在外围模块。P1 模拟器另使用 serde、serde_json 及其依赖解析内置 OFC 样例。可运行 cargo tree -p ofe-sim -e normal 查看实际依赖树。模拟器归档随附这棵依赖树中的上游许可、样例许可与对应源码地址。Criterion 用于测试与基准。所有 Cargo 源包由 Cargo.lock 记录版本及校验和。
 
 |组件|版本 / 来源|用途|许可与再分发条件|
 |---|---|---|---|

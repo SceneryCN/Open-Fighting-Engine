@@ -262,3 +262,136 @@ fn rising_move_applies_authored_velocity_then_gravity_and_lands() {
         assert_eq!(arena.fighters()[0].fighter.position.h, height);
     }
 }
+
+#[test]
+fn seeded_clock_and_hash_vectors_cover_idle_paths_and_atomic_failures() {
+    let config = roster(MoveKind::Strike);
+    let mut arena = Arena::new(config.clone()).unwrap();
+    let mut explicit = Arena::with_seed(config.clone(), 0).unwrap();
+    let other = Arena::with_seed(config, u64::MAX).unwrap();
+    assert_eq!(arena.state_hash(), explicit.state_hash());
+    assert_ne!(arena.state_hash(), other.state_hash());
+    assert_eq!(arena.seed(), 0);
+    let initial_hash = arena.state_hash();
+    arena.step(1, &[]).unwrap();
+    explicit
+        .step(
+            1,
+            &[Command {
+                id: 2,
+                ..Default::default()
+            }],
+        )
+        .unwrap();
+    assert_eq!(arena.state_hash(), explicit.state_hash());
+    assert_eq!(arena.random_sample(), 0xe220_a839_7b1d_cdaf);
+    let committed_hash = arena.state_hash();
+    assert_ne!(initial_hash, committed_hash);
+    assert_eq!(
+        arena.step(2, &[Command::default()]),
+        Err(DuelError::InvalidInput)
+    );
+    assert_eq!(arena.random_sample(), 0xe220_a839_7b1d_cdaf);
+    assert_eq!(arena.state_hash(), committed_hash);
+    arena.step(2, &[]).unwrap();
+    assert_eq!(arena.random_sample(), 0x6e78_9e6a_a1b9_65f4);
+    assert_eq!(arena.seed(), 0);
+    assert_eq!(initial_hash, 0x3d44_88fc_fe5a_f859);
+    assert_eq!(committed_hash, 0xb889_aa34_b5b6_f563);
+}
+
+#[test]
+fn disk_checkpoint_preserves_active_projectiles_events_and_future_frames() {
+    let mut config = roster(MoveKind::Projectile {
+        speed: 1,
+        lifetime: 9,
+    });
+    for f in &mut config.fighters {
+        f.moves[0].hitstop = 2;
+        f.moves[0].base.recovery = 4;
+        f.base.attack = f.moves[0].base;
+    }
+    let mut original = Arena::with_seed(config, 431).unwrap();
+    original.set_infinite_health(true);
+    let cast = |id| Command {
+        id,
+        move_index: Some(0),
+        ..Default::default()
+    };
+    original.step(1, &[cast(2), cast(1)]).unwrap();
+    assert_eq!(original.projectiles().len(), 2);
+    let checkpoint = original.checkpoint();
+    let bytes = serde_json::to_vec(&checkpoint).unwrap();
+    let decoded = serde_json::from_slice(&bytes).unwrap();
+    let mut copy = Arena::from_checkpoint(&decoded).unwrap();
+    assert!(copy.infinite_health());
+    assert_eq!(copy.seed(), 431);
+    assert_eq!(copy.state_hash(), original.state_hash());
+    for tick in 2..=30 {
+        let command = Command {
+            id: 1,
+            controls: Controls {
+                switch_lane: tick == 7,
+                jump: tick == 18,
+                axis: 1,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        for game in [&mut original, &mut copy] {
+            game.step(tick, &[command]).unwrap();
+        }
+        assert_eq!(original.events(), copy.events());
+        assert_eq!(original.random_sample(), copy.random_sample());
+        assert_eq!(original.state_hash(), copy.state_hash());
+        assert_eq!(
+            Arena::from_checkpoint(&copy.checkpoint())
+                .unwrap()
+                .state_hash(),
+            copy.state_hash()
+        );
+    }
+    copy.restore(&checkpoint).unwrap();
+    assert_eq!(copy.frame(), 1);
+    assert_eq!(serde_json::to_vec(&copy.checkpoint()).unwrap(), bytes);
+}
+
+#[test]
+fn invalid_checkpoint_never_replaces_committed_state() {
+    let mut arena = Arena::new(roster(MoveKind::Projectile {
+        speed: 2,
+        lifetime: 10,
+    }))
+    .unwrap();
+    arena
+        .step(
+            1,
+            &[Command {
+                id: 1,
+                move_index: Some(0),
+                ..Default::default()
+            }],
+        )
+        .unwrap();
+    let original = serde_json::to_value(arena.checkpoint()).unwrap();
+    let hash = arena.state_hash();
+    for (pointer, invalid) in [
+        ("/version", 2),
+        ("/config/fighters/0/base/max_health", 99),
+        ("/world/fighters/0/fighter/facing", 0),
+        ("/world/timers/0/action/Attack/index", 99),
+        ("/world/flights/0/owner", 4),
+        ("/world/flights/0/cast", 0),
+        ("/world/projectiles/0/owner", 55),
+    ] {
+        let mut broken = original.clone();
+        *broken.pointer_mut(pointer).unwrap() = serde_json::json!(invalid);
+        let decoded = serde_json::from_value(broken).unwrap();
+        assert_eq!(
+            arena.restore(&decoded),
+            Err(DuelError::InvalidConfig),
+            "{pointer}"
+        );
+        assert_eq!(arena.state_hash(), hash);
+    }
+}

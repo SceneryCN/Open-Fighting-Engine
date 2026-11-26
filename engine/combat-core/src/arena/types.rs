@@ -3,7 +3,8 @@ use crate::duel::{AttackConfig, Controls, Event, Fighter, FighterConfig, LaneCon
 use crate::{EntityId, Position};
 
 /// A validated match has two to four unique entities on opposing teams.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArenaConfig {
     /// Fighters in arbitrary input order.
     pub fighters: Vec<CombatantConfig>,
@@ -12,7 +13,8 @@ pub struct ArenaConfig {
 }
 
 /// Complete configuration for one combatant.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CombatantConfig {
     /// Stable nonzero identity.
     pub id: EntityId,
@@ -33,7 +35,8 @@ pub struct CombatantConfig {
 }
 
 /// Attack properties shared by strikes, throws, supers and projectile sources.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct MoveConfig {
     /// Base frame data, damage and geometry.
     pub base: AttackConfig,
@@ -56,7 +59,8 @@ pub struct MoveConfig {
 }
 
 /// Action behavior. Throws bypass guard and armor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum MoveKind {
     /// Ordinary close-range contact.
     Strike,
@@ -74,7 +78,8 @@ pub enum MoveKind {
 }
 
 /// Inclusive action ages.
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Window {
     /// First age.
     pub start: u32,
@@ -83,7 +88,8 @@ pub struct Window {
 }
 
 /// One permitted move transition after a hit confirm.
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Cancel {
     /// Legal source ages.
     pub window: Window,
@@ -92,7 +98,8 @@ pub struct Cancel {
 }
 
 /// A command for one entity. Missing entities receive neutral input.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Default, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Command {
     /// Target entity.
     pub id: EntityId,
@@ -101,11 +108,13 @@ pub struct Command {
     /// Request dash.
     pub dash: bool,
     /// Explicit move request; takes precedence over the normal attack button.
+    #[serde(deserialize_with = "serde::Deserialize::deserialize")]
     pub move_index: Option<usize>,
 }
 
 /// Committed observation of a fighter.
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArenaFighter {
     /// P1-compatible position, state and health.
     pub fighter: Fighter,
@@ -118,13 +127,15 @@ pub struct ArenaFighter {
     /// Remaining frozen ticks.
     pub hitstop: u32,
     /// Current move, if attacking.
+    #[serde(deserialize_with = "serde::Deserialize::deserialize")]
     pub move_index: Option<usize>,
     /// True during a dash.
     pub dashing: bool,
 }
 
 /// Committed observation of a live projectile.
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Projectile {
     /// Unique attack-instance identity.
     pub id: u64,
@@ -135,7 +146,8 @@ pub struct Projectile {
 }
 
 /// Per-tick events. Base events preserve Duel semantics.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum ArenaEvent {
     /// P1-compatible event.
     Base(Event),

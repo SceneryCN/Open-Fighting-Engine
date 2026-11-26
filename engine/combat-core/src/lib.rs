@@ -19,7 +19,8 @@ pub struct Input {
 }
 
 /// Integer world coordinates.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Position {
     /// Rightward displacement.
     pub x: i32,

@@ -2,6 +2,8 @@
 //! Deterministic two-to-four-entity combat. One successful step commits one 60 Hz tick.
 //! Rules are immutable; mutable frame data is staged until every checked operation succeeds.
 mod action;
+mod checkpoint;
+pub use checkpoint::ArenaSnapshot;
 mod geometry;
 mod resolve;
 mod types;
@@ -63,7 +65,8 @@ impl MoveConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Flight {
     owner: usize,
     move_index: usize,
@@ -74,7 +77,8 @@ struct Flight {
     speed: i32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 struct World {
     fighters: Vec<ArenaFighter>,
     timers: Vec<Timers>,
@@ -104,6 +108,8 @@ struct FrameEffects {
 #[derive(Debug, Clone)]
 pub struct Arena {
     config: ArenaConfig,
+    rules_hash: u64,
+    rng_state: u64,
     world: World,
     frame: u64,
     events: Vec<ArenaEvent>,
@@ -141,7 +147,12 @@ fn facing(actors: &[ArenaFighter], i: usize) -> i32 {
 
 impl Arena {
     /// Validate a two-, three- or four-entity roster, then initialize tick zero.
-    pub fn new(mut config: ArenaConfig) -> Result<Self, DuelError> {
+    pub fn new(config: ArenaConfig) -> Result<Self, DuelError> {
+        Self::with_seed(config, 0)
+    }
+
+    /// Create tick zero with an explicit reproducible random stream seed.
+    pub fn with_seed(mut config: ArenaConfig, seed: u64) -> Result<Self, DuelError> {
         config.fighters.sort_unstable_by_key(|f| f.id);
         if !(2..=4).contains(&config.fighters.len())
             || config.lane.travel == 0
@@ -194,6 +205,8 @@ impl Arena {
         let contact_capacity = n * (n - 1);
         let event_capacity = 2 * contact_capacity + 6 * n;
         Ok(Self {
+            rules_hash: checkpoint::rules_hash(&config),
+            rng_state: seed,
             config,
             infinite_health: false,
             idle: world
@@ -289,7 +302,7 @@ impl Arena {
         }
         if self.idle && inputs.is_empty() {
             self.events.clear();
-            self.frame = frame;
+            self.commit_clock(frame);
             return Ok(());
         }
         let mut commands = [None; 4];
@@ -316,7 +329,7 @@ impl Arena {
                 .all(|c| c.controls == Default::default() && !c.dash && c.move_index.is_none())
         {
             self.events.clear();
-            self.frame = frame;
+            self.commit_clock(frame);
             return Ok(());
         }
         let world = &mut self.staging;
@@ -383,13 +396,10 @@ impl Arena {
             }
         }
         world.last_id = effects.last_id;
-        self.idle = world.projectiles.is_empty()
-            && world.fighters.iter().zip(&world.timers).all(|(v, t)| {
-                v.fighter.state == State::Idle && v.hitstop == 0 && v.combo == 0 && t.is_idle()
-            });
+        self.idle = world.is_idle();
         std::mem::swap(&mut self.world, world);
         std::mem::swap(&mut self.events, &mut effects.events);
-        self.frame = frame;
+        self.commit_clock(frame);
         Ok(())
     }
 }

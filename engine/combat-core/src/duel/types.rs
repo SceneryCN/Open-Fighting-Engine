@@ -11,7 +11,8 @@ pub struct DuelConfig {
 }
 
 /// Data for one fighter. Distances are integral logical units, time is in ticks.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FighterConfig {
     /// Initial position on a lane at ground level or above.
     pub spawn: Position,
@@ -30,7 +31,8 @@ pub struct FighterConfig {
 }
 
 /// Lane change duration and hit response.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LaneConfig {
     /// Stationary ticks at the beginning.
     pub startup: u32,
@@ -45,7 +47,8 @@ pub struct LaneConfig {
 }
 
 /// A half-open local X/H rectangle. X is relative to facing, H points up.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Rect {
     /// Left edge when facing right.
     pub x: i32,
@@ -58,7 +61,8 @@ pub struct Rect {
 }
 
 /// Rules for a single normal attack. The active window can contact once.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AttackConfig {
     /// Initial non-hitting ticks.
     pub startup: u32,
@@ -81,7 +85,8 @@ pub struct AttackConfig {
 }
 
 /// Depth eligibility. The nearest lane changes at Z=500.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum LaneRule {
     /// Only the same nearest lane.
     SameLane,
@@ -94,7 +99,8 @@ pub enum LaneRule {
 }
 
 /// Simultaneous requests for one fighter on one numbered tick.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Controls {
     /// -1 for left, 0 for neutral, 1 for right.
     pub axis: i32,
@@ -109,7 +115,8 @@ pub struct Controls {
 }
 
 /// Public read-only observation of one fighter after settlement.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Fighter {
     /// Stable entity ID within this duel.
     pub id: EntityId,
@@ -124,7 +131,8 @@ pub struct Fighter {
 }
 
 /// Committed action or reaction in the duel state machine.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum State {
     /// Grounded with no action.
     Idle,
@@ -149,7 +157,8 @@ pub enum State {
 }
 
 /// Changes committed in a tick, with simultaneous contacts ordered by attacker ID.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum Event {
     /// Final position differs from the previous tick.
     Moved {

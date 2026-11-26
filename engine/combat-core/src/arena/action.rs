@@ -2,7 +2,8 @@
 use super::*;
 use geometry::{FAR, nearest};
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(super) enum Action {
     #[default]
     Free,
@@ -21,7 +22,8 @@ pub(super) enum Action {
     },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(super) struct Attack {
     pub(super) index: usize,
     pub(super) instance: u64,
@@ -29,11 +31,13 @@ pub(super) struct Attack {
     pub(super) age: u64,
     pub(super) armor: u32,
     pub(super) confirmed: bool,
+    #[serde(deserialize_with = "serde::Deserialize::deserialize")]
     pub(super) window: Option<usize>,
     pub(super) spent: u8,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(super) struct Timers {
     pub(super) action: Action,
     velocity: i32,
@@ -96,6 +100,62 @@ pub(super) fn next_id(last: &mut u64) -> Result<u64, DuelError> {
 }
 
 impl Timers {
+    pub(super) fn valid(
+        &self,
+        slot: &ArenaFighter,
+        config: &CombatantConfig,
+        lane: LaneConfig,
+        last_id: u64,
+        mask: u8,
+    ) -> bool {
+        if self.cooldown > lane.cooldown
+            || slot.dashing != matches!(self.action, Action::Dash { .. })
+        {
+            return false;
+        }
+        if let Action::Attack(a) = self.action {
+            let Some(m) = config.moves.get(a.index) else {
+                return false;
+            };
+            return slot.move_index == Some(a.index)
+                && slot.fighter.state == State::Attack
+                && (1..=last_id).contains(&a.instance)
+                && (1..=m.duration()).contains(&a.age)
+                && a.window == m.window(a.age - 1)
+                && a.spent & !mask == 0
+                && a.armor <= m.armor;
+        }
+        if slot.move_index.is_some() {
+            return false;
+        }
+        match self.action {
+            Action::Attack(_) => unreachable!(),
+            Action::Free => matches!(
+                slot.fighter.state,
+                State::Idle | State::Walk | State::Jump | State::Fall | State::Guard | State::Ko
+            ),
+            Action::Dash {
+                remaining,
+                direction,
+            } => {
+                slot.fighter.state == State::Walk
+                    && matches!(direction, -1 | 1)
+                    && remaining < config.dash_ticks
+            }
+            Action::Switch { age, from } => {
+                slot.fighter.state == State::LaneSwitch
+                    && matches!(from, 0 | FAR)
+                    && (1..=u64::from(lane.startup)
+                        + u64::from(lane.travel)
+                        + u64::from(lane.recovery))
+                        .contains(&age)
+            }
+            Action::Stun { state, .. } => {
+                matches!(state, State::Hitstun | State::Blockstun) && state == slot.fighter.state
+            }
+        }
+    }
+
     pub(super) fn is_idle(&self) -> bool {
         matches!(self.action, Action::Free) && self.cooldown == 0 && self.velocity == 0
     }

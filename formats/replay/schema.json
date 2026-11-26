@@ -1,0 +1,525 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ofe:replay:1",
+  "title": "OFE_REPLAY v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "initial", "initial_hash", "frames"],
+  "properties": {
+    "format": {"const": "OFE_REPLAY"},
+    "version": {"const": 1},
+    "initial": {"$ref": "#/$defs/checkpoint"},
+    "initial_hash": {"$ref": "#/$defs/hash"},
+    "frames": {"type": "array", "items": {"$ref": "#/$defs/tick"}, "maxItems": 216000}
+  },
+  "$defs": {
+    "u64": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "u32": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "i32": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
+    "mask": {"type": "integer", "minimum": 0, "maximum": 15},
+    "facing": {"enum": [-1, 1]},
+    "boolean": {"type": "boolean"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{16}$", "minLength": 16, "maxLength": 16},
+    "index": {"anyOf": [{"$ref": "#/$defs/u64"}, {"type": "null"}]},
+    "state": {
+      "enum": ["Idle", "Walk", "Jump", "Fall", "LaneSwitch", "Attack", "Guard", "Hitstun", "Blockstun", "Ko"]
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "z", "h"],
+      "properties": {"x": {"$ref": "#/$defs/i32"}, "z": {"$ref": "#/$defs/i32"}, "h": {"$ref": "#/$defs/i32"}}
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "h", "width", "height"],
+      "properties": {
+        "x": {"$ref": "#/$defs/i32"},
+        "h": {"$ref": "#/$defs/i32"},
+        "width": {"$ref": "#/$defs/i32"},
+        "height": {"$ref": "#/$defs/i32"}
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {"start": {"$ref": "#/$defs/u32"}, "end": {"$ref": "#/$defs/u32"}}
+    },
+    "lane_rule": {
+      "oneOf": [
+        {"enum": ["SameLane", "CrossLane", "BothLanes"]},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["DepthRange"],
+          "properties": {"DepthRange": {"$ref": "#/$defs/i32"}}
+        }
+      ]
+    },
+    "attack_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startup",
+        "active",
+        "recovery",
+        "damage",
+        "hitstun",
+        "blockstun",
+        "pushback",
+        "hitbox",
+        "lane_rule"
+      ],
+      "properties": {
+        "startup": {"$ref": "#/$defs/u32"},
+        "active": {"$ref": "#/$defs/u32"},
+        "recovery": {"$ref": "#/$defs/u32"},
+        "damage": {"$ref": "#/$defs/i32"},
+        "hitstun": {"$ref": "#/$defs/u32"},
+        "blockstun": {"$ref": "#/$defs/u32"},
+        "pushback": {"$ref": "#/$defs/i32"},
+        "hitbox": {"$ref": "#/$defs/rect"},
+        "lane_rule": {"$ref": "#/$defs/lane_rule"}
+      }
+    },
+    "kind": {
+      "oneOf": [
+        {"enum": ["Strike", "Throw", "Super"]},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Projectile"],
+          "properties": {
+            "Projectile": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["speed", "lifetime"],
+              "properties": {"speed": {"$ref": "#/$defs/i32"}, "lifetime": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        }
+      ]
+    },
+    "move": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base",
+        "kind",
+        "hitstop",
+        "windows",
+        "cancels",
+        "armor",
+        "invulnerability",
+        "launch_speed",
+        "energy_cost"
+      ],
+      "properties": {
+        "base": {"$ref": "#/$defs/attack_config"},
+        "kind": {"$ref": "#/$defs/kind"},
+        "hitstop": {"$ref": "#/$defs/u32"},
+        "windows": {"type": "array", "items": {"$ref": "#/$defs/window"}},
+        "cancels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["window", "into"],
+            "properties": {"window": {"$ref": "#/$defs/window"}, "into": {"$ref": "#/$defs/u64"}}
+          }
+        },
+        "armor": {"$ref": "#/$defs/u32"},
+        "invulnerability": {"$ref": "#/$defs/u32"},
+        "launch_speed": {"$ref": "#/$defs/i32"},
+        "energy_cost": {"$ref": "#/$defs/i32"}
+      }
+    },
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spawn", "max_health", "walk_speed", "jump_speed", "gravity", "hurtbox", "attack"],
+      "properties": {
+        "spawn": {"$ref": "#/$defs/point"},
+        "max_health": {"$ref": "#/$defs/i32"},
+        "walk_speed": {"$ref": "#/$defs/i32"},
+        "jump_speed": {"$ref": "#/$defs/i32"},
+        "gravity": {"$ref": "#/$defs/i32"},
+        "hurtbox": {"$ref": "#/$defs/rect"},
+        "attack": {"$ref": "#/$defs/attack_config"}
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "team", "base", "moves", "dash_speed", "dash_ticks", "max_energy", "initial_energy"],
+      "properties": {
+        "id": {"$ref": "#/$defs/u32"},
+        "team": {"$ref": "#/$defs/u32"},
+        "base": {"$ref": "#/$defs/base"},
+        "moves": {"type": "array", "items": {"$ref": "#/$defs/move"}, "minItems": 1},
+        "dash_speed": {"$ref": "#/$defs/i32"},
+        "dash_ticks": {"$ref": "#/$defs/u32"},
+        "max_energy": {"$ref": "#/$defs/i32"},
+        "initial_energy": {"$ref": "#/$defs/i32"}
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fighters", "lane"],
+      "properties": {
+        "fighters": {"type": "array", "items": {"$ref": "#/$defs/rules"}, "minItems": 2, "maxItems": 4},
+        "lane": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["startup", "travel", "recovery", "cooldown", "interruptible"],
+          "properties": {
+            "startup": {"$ref": "#/$defs/u32"},
+            "travel": {"$ref": "#/$defs/u32"},
+            "recovery": {"$ref": "#/$defs/u32"},
+            "cooldown": {"$ref": "#/$defs/u32"},
+            "interruptible": {"$ref": "#/$defs/boolean"}
+          }
+        }
+      }
+    },
+    "fighter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "position", "health", "state", "facing"],
+      "properties": {
+        "id": {"$ref": "#/$defs/u32"},
+        "position": {"$ref": "#/$defs/point"},
+        "health": {"$ref": "#/$defs/i32"},
+        "state": {"$ref": "#/$defs/state"},
+        "facing": {"$ref": "#/$defs/facing"}
+      }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fighter", "team", "energy", "combo", "hitstop", "move_index", "dashing"],
+      "properties": {
+        "fighter": {"$ref": "#/$defs/fighter"},
+        "team": {"$ref": "#/$defs/u32"},
+        "energy": {"$ref": "#/$defs/i32"},
+        "combo": {"$ref": "#/$defs/u32"},
+        "hitstop": {"$ref": "#/$defs/u32"},
+        "move_index": {"$ref": "#/$defs/index"},
+        "dashing": {"$ref": "#/$defs/boolean"}
+      }
+    },
+    "attack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "instance", "age", "armor", "confirmed", "window", "spent"],
+      "properties": {
+        "index": {"$ref": "#/$defs/u64"},
+        "instance": {"$ref": "#/$defs/u64"},
+        "age": {"$ref": "#/$defs/u64"},
+        "armor": {"$ref": "#/$defs/u32"},
+        "confirmed": {"$ref": "#/$defs/boolean"},
+        "window": {"$ref": "#/$defs/index"},
+        "spent": {"$ref": "#/$defs/mask"}
+      }
+    },
+    "action": {
+      "oneOf": [
+        {"const": "Free"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Attack"],
+          "properties": {"Attack": {"$ref": "#/$defs/attack"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Dash"],
+          "properties": {
+            "Dash": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["remaining", "direction"],
+              "properties": {"remaining": {"$ref": "#/$defs/u32"}, "direction": {"$ref": "#/$defs/facing"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Switch"],
+          "properties": {
+            "Switch": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["age", "from"],
+              "properties": {"age": {"$ref": "#/$defs/u64"}, "from": {"enum": [0, 1000]}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Stun"],
+          "properties": {
+            "Stun": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["remaining", "state"],
+              "properties": {"remaining": {"$ref": "#/$defs/u32"}, "state": {"enum": ["Hitstun", "Blockstun"]}}
+            }
+          }
+        }
+      ]
+    },
+    "timer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "velocity", "cooldown"],
+      "properties": {
+        "action": {"$ref": "#/$defs/action"},
+        "velocity": {"$ref": "#/$defs/i32"},
+        "cooldown": {"$ref": "#/$defs/u32"}
+      }
+    },
+    "projectile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "owner", "position"],
+      "properties": {
+        "id": {"$ref": "#/$defs/u64"},
+        "owner": {"$ref": "#/$defs/u32"},
+        "position": {"$ref": "#/$defs/point"}
+      }
+    },
+    "flight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "move_index", "cast", "facing", "spent", "remaining", "speed"],
+      "properties": {
+        "owner": {"type": "integer", "minimum": 0, "maximum": 3},
+        "move_index": {"$ref": "#/$defs/u64"},
+        "cast": {"$ref": "#/$defs/u64"},
+        "facing": {"$ref": "#/$defs/facing"},
+        "spent": {"$ref": "#/$defs/mask"},
+        "remaining": {"$ref": "#/$defs/u32"},
+        "speed": {"$ref": "#/$defs/i32"}
+      }
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fighters", "timers", "projectiles", "flights", "combos", "last_id"],
+      "properties": {
+        "fighters": {"type": "array", "items": {"$ref": "#/$defs/slot"}, "minItems": 2, "maxItems": 4},
+        "timers": {"type": "array", "items": {"$ref": "#/$defs/timer"}, "minItems": 2, "maxItems": 4},
+        "projectiles": {"type": "array", "items": {"$ref": "#/$defs/projectile"}},
+        "flights": {"type": "array", "items": {"$ref": "#/$defs/flight"}},
+        "combos": {
+          "type": "array",
+          "items": {"type": "array", "items": {"$ref": "#/$defs/u32"}, "minItems": 4, "maxItems": 4},
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "last_id": {"$ref": "#/$defs/u64"}
+      }
+    },
+    "event_base": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Moved"],
+          "properties": {
+            "Moved": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "position"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}, "position": {"$ref": "#/$defs/point"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["StateChanged"],
+          "properties": {
+            "StateChanged": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "state"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}, "state": {"$ref": "#/$defs/state"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Hit"],
+          "properties": {
+            "Hit": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["attacker", "target", "damage"],
+              "properties": {
+                "attacker": {"$ref": "#/$defs/u32"},
+                "target": {"$ref": "#/$defs/u32"},
+                "damage": {"$ref": "#/$defs/i32"}
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Blocked"],
+          "properties": {
+            "Blocked": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["attacker", "target"],
+              "properties": {"attacker": {"$ref": "#/$defs/u32"}, "target": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Knockout"],
+          "properties": {
+            "Knockout": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        }
+      ]
+    },
+    "event": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Base"],
+          "properties": {"Base": {"$ref": "#/$defs/event_base"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Started"],
+          "properties": {
+            "Started": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "move_index"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}, "move_index": {"$ref": "#/$defs/u64"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Cancelled"],
+          "properties": {
+            "Cancelled": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "from", "into"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}, "from": {"$ref": "#/$defs/u64"}, "into": {"$ref": "#/$defs/u64"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Dashed"],
+          "properties": {
+            "Dashed": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id"],
+              "properties": {"id": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Armored"],
+          "properties": {
+            "Armored": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["attacker", "target"],
+              "properties": {"attacker": {"$ref": "#/$defs/u32"}, "target": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ProjectileSpawned"],
+          "properties": {
+            "ProjectileSpawned": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "owner"],
+              "properties": {"id": {"$ref": "#/$defs/u64"}, "owner": {"$ref": "#/$defs/u32"}}
+            }
+          }
+        }
+      ]
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "config", "frame", "rng_state", "infinite_health", "world", "events"],
+      "properties": {
+        "version": {"const": 1},
+        "config": {"$ref": "#/$defs/config"},
+        "frame": {"$ref": "#/$defs/u64"},
+        "rng_state": {"$ref": "#/$defs/u64"},
+        "infinite_health": {"$ref": "#/$defs/boolean"},
+        "world": {"$ref": "#/$defs/world"},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/event"}}
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "controls", "dash", "move_index"],
+      "properties": {
+        "id": {"$ref": "#/$defs/u32"},
+        "controls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["axis", "jump", "switch_lane", "attack", "guard"],
+          "properties": {
+            "axis": {"enum": [-1, 0, 1]},
+            "jump": {"$ref": "#/$defs/boolean"},
+            "switch_lane": {"$ref": "#/$defs/boolean"},
+            "attack": {"$ref": "#/$defs/boolean"},
+            "guard": {"$ref": "#/$defs/boolean"}
+          }
+        },
+        "dash": {"$ref": "#/$defs/boolean"},
+        "move_index": {"$ref": "#/$defs/index"}
+      }
+    },
+    "tick": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame", "commands", "hash"],
+      "properties": {
+        "frame": {"$ref": "#/$defs/u64"},
+        "commands": {"type": "array", "items": {"$ref": "#/$defs/command"}, "maxItems": 4},
+        "hash": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}
