@@ -17,7 +17,7 @@ cargo run --locked -p ofe-sim
 |移动、跳跃、切线|整数 X/Z/H，地面与空中移动，分阶段切线、冷却与可中断配置。|
 |普攻与防御|按招式帧窗、双线规则、朝向和整数 X/H 矩形检测。有效窗去重，同帧伤害、格挡、受击、击退和 KO 有测试。|
 |数据与 API|两份 OFC 1.0 样例提供生命、普通攻击和判定框；场景提供出生位置和移动参数。[接口决议](docs/architecture/ADR-004.md)|
-|自动化与基准|测试覆盖多帧确定性、同时 KO、坐标溢出与错误原子性。实测双向命中约 29 ns/帧。[性能数据](docs/p1/PERFORMANCE.md) · [独立 QA](docs/testing/P1_ACCEPTANCE_REPORT.md)|
+|自动化与基准|33 项 Rust 测试全部通过，含 13 项独立双人核心测试，覆盖多帧确定性、同时 KO、坐标溢出与错误原子性。实测双向命中约 29 ns/帧。[性能数据](docs/p1/PERFORMANCE.md) · [独立 QA](docs/testing/P1_ACCEPTANCE_REPORT.md)|
 |构建|四个桌面目标的 CI 分别测试核心，构建、运行并打包 ofe-sim，另跑 Godot ABI v1 回归。[托管构建](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45785808701)|
 
 ## 已知限制与风险

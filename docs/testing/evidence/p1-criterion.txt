@@ -17,4 +17,3 @@ duel/trade_tick         time:   [28.048 ns 28.767 ns 29.668 ns]
                         No change in performance detected.
 Found 2 outliers among 30 measurements (6.67%)
   2 (6.67%) high severe
-
