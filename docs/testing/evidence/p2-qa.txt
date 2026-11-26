@@ -1,0 +1,73 @@
+2026-11-26 independent QA, macOS arm64. Selected execution output.
+# P1 reference behavior and failing early P2 comparison
+frame=7 survivor_x=2 target_x=1 target=Ko survivor_facing=-1
+  left: 1
+ right: -1
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+# Final integrated workspace
++zsh:1> git rev-parse HEAD
+a29197e71d081272e1ec32c2487877f52cbeb2a7
++zsh:1> cargo fmt --all -- --check
++zsh:1> cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
++zsh:1> cargo test --locked --workspace
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++zsh:1> cargo nextest run --locked --workspace
+        PASS [   0.009s] (31/56) ofe-combat-core::p2_qa delayed_projectile_hit_cannot_confirm_a_different_action
+        PASS [   0.011s] (32/56) ofe-combat-core::p2_qa active_enemy_facing_prefers_distance_then_lowest_id
+        PASS [   0.009s] (33/56) ofe-combat-core::p2_qa four_player_contacts_are_order_independent_and_team_filtered
+        PASS [   0.010s] (34/56) ofe-combat-core::p2_qa exact_dash_ticks_then_normal_walk_and_input_validation_is_atomic
+        PASS [   0.011s] (36/56) ofe-combat-core::p2_qa each_explicit_window_can_hit_each_target_once_and_combo_expires
+        PASS [   0.010s] (37/56) ofe-combat-core::p2_qa four_lethal_strikes_all_settle_before_ko
+        PASS [   0.010s] (38/56) ofe-combat-core::p2_qa hit_confirm_cancel_first_and_last_tick_and_super_cost_once
+        PASS [   0.011s] (39/56) ofe-combat-core::p2_qa invulnerability_expires_and_armor_absorbs_exactly_one_reaction
+        PASS [   0.015s] (40/56) ofe-combat-core::p2_qa freeze_uses_maximum_and_resumes_hit_and_block_stun
+        PASS [   0.009s] (41/56) ofe-combat-core::p2_qa legacy_duel_retains_facing_after_winner_walks_past_ko_opponent
+        PASS [   0.011s] (42/56) ofe-combat-core::p2_qa projectile_overflow_rolls_back_age_energy_fighters_and_last_events
+        PASS [   0.011s] (43/56) ofe-combat-core::p2_qa throw_bypasses_guard_and_armor_but_not_invulnerability
+        PASS [   0.011s] (44/56) ofe-combat-core::p2_qa rejects_bad_orders_energy_windows_and_profile_combinations
+        PASS [   0.013s] (45/56) ofe-combat-core::p2_qa mutual_throws_and_lethal_armored_hit_still_commit
+        PASS [   0.012s] (46/56) ofe-combat-core::p2_qa projectile_hits_after_caster_recovers_and_expires_at_lifetime
+        PASS [   0.011s] (47/56) ofe-combat-core::p2_qa simultaneous_sources_spend_last_armor_in_stable_id_order
+     Summary [   0.327s] 56 tests run: 56 passed, 0 skipped
++zsh:1> cargo build --release --locked -p ofe-sim
++zsh:1> python3 scripts/release/package_sim.py build/check-final.tar.gz
++zsh:1> mkdir -p build/final
++zsh:1> tar -C build/final -xzf build/check-final.tar.gz
++zsh:1> cd build/final
++zsh:1> ./ofe-sim --script duel.frames
++zsh:1> cmp /tmp/ofe-p2-qa-final-duel.txt ../../tools/ofe-sim/tests/duel.golden
++zsh:1> ./ofe-sim --mode 2v2 --script arena.frames
++zsh:1> ./ofe-sim --mode ffa --script arena.frames
+# ABI, headless and formats
+1/2 Test #1: abi_smoke ........................   Passed    0.31 sec
+2/2 Test #2: concurrent_abi ...................   Passed    0.30 sec
+100% tests passed out of 2
+OFE_P0_PASS
+Ran 14 tests in 0.138s
+OK
+OK tools/ofe-sim/fixtures/arena/manifest.json
+OK tools/ofe-sim/fixtures/arena/move_profile.json
+# 2v2 package last frame
+frame=22
+  p1 team=1 hp=150 energy=20 state=Attack pos=(2,0,0) facing=1 move=Some(5) combo=0 hitstop=0 dash=false
+  p2 team=1 hp=150 energy=40 state=Attack pos=(-2,0,0) facing=1 move=Some(6) combo=1 hitstop=0 dash=false
+  p3 team=2 hp=111 energy=40 state=Hitstun pos=(0,0,0) facing=1 move=None combo=0 hitstop=0 dash=false
+  p4 team=2 hp=143 energy=40 state=Hitstun pos=(2,0,0) facing=-1 move=None combo=0 hitstop=0 dash=false
+# FFA package last frame
+frame=22
+  p1 team=1 hp=143 energy=20 state=Attack pos=(2,0,0) facing=1 move=Some(5) combo=0 hitstop=0 dash=false
+  p2 team=2 hp=118 energy=40 state=Attack pos=(-2,0,0) facing=1 move=Some(6) combo=1 hitstop=0 dash=false
+  p3 team=3 hp=102 energy=40 state=Hitstun pos=(0,0,0) facing=1 move=None combo=0 hitstop=0 dash=false
+  p4 team=4 hp=143 energy=40 state=Hitstun pos=(2,0,0) facing=-1 move=None combo=1 hitstop=0 dash=false
