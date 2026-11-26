@@ -10,13 +10,13 @@ from io import BytesIO
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def cargo_packages():
+def cargo_packages(root_package="ofe-sim"):
     metadata = json.loads(subprocess.check_output(
         ["cargo", "metadata", "--locked", "--format-version", "1"], cwd=ROOT
     ))
     packages = {p["id"]: p for p in metadata["packages"]}
     nodes = {n["id"]: n for n in metadata["resolve"]["nodes"]}
-    pending = [next(p["id"] for p in packages.values() if p["name"] == "ofe-sim")]
+    pending = [next(p["id"] for p in packages.values() if p["name"] == root_package)]
     visited = set()
     while pending:
         current = pending.pop()
@@ -27,6 +27,17 @@ def cargo_packages():
                        if any(k["kind"] != "dev" for k in dep["dep_kinds"]))
         if packages[current]["source"]:
             yield packages[current]
+
+
+def crate_notices(root_package):
+    for crate in cargo_packages(root_package):
+        directory = Path(crate["manifest_path"]).parent
+        notices = sorted(p for p in directory.iterdir()
+                         if p.name.upper().startswith(("LICENSE", "COPYING", "NOTICE")))
+        if not notices:
+            raise ValueError(f"No packaged license found for {crate['name']}")
+        for notice in notices:
+            yield notice, f"LICENSES/{crate['name']}-{crate['version']}/{notice.name}"
 
 
 def package(output):
@@ -48,14 +59,8 @@ def package(output):
             (ROOT / "tools/ofe-sim/fixtures/amber/licenses/notice.txt", "LICENSES/samples.txt"),
         ]:
             archive.add(source, arcname=name)
-        for crate in cargo_packages():
-            directory = Path(crate["manifest_path"]).parent
-            notices = sorted(p for p in directory.iterdir()
-                             if p.name.upper().startswith(("LICENSE", "COPYING", "NOTICE")))
-            if not notices:
-                raise ValueError(f"No packaged license found for {crate['name']}")
-            for notice in notices:
-                archive.add(notice, arcname=f"LICENSES/{crate['name']}-{crate['version']}/{notice.name}")
+        for notice, name in crate_notices("ofe-sim"):
+            archive.add(notice, arcname=name)
         readme = (f"OFE combat simulator\nSource: https://github.com/SceneryCN/Open-Fighting-Engine/tree/{revision}\n"
                   f"Run ./{executable} --script duel.frames to replay the example, or ./{executable} for interactive controls.\n"
                   f"Run ./{executable} --mode 2v2 --script arena.frames or use --mode ffa for four independent teams.\n"

@@ -80,8 +80,8 @@ jobs:
           mkdir -p build/export
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
           python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported
-          tar -C build/export -czf build/ofe-p0.tar.gz .
+          python scripts/release/package_runtime.py build/export build/ofe-runtime.tar.gz
       - uses: actions/upload-artifact@v7
         with:
-          name: ofe-p0-${{ matrix.id }}
-          path: build/ofe-p0.tar.gz
+          name: ofe-runtime-${{ matrix.id }}
+          path: build/ofe-runtime.tar.gz
