@@ -118,3 +118,8 @@ OFE_P0_PASS
 # Linux x64 export: docker exec ofe-p0-linux /work/build/delivery/linux-x64/OFE --headless -- --p0-test
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 OFE_P0_PASS
+
+# Final Windows console wrapper from build fix 27c71d7; Wine 10.0, LC_ALL=C.UTF-8
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+OFE_P0_PASS
