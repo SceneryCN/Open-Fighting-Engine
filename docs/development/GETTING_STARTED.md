@@ -9,7 +9,7 @@
 |Python|使用 3.12，供 godot-cpp 生成绑定及 Schema 测试使用。|
 |Godot|使用 Godot 4.7.2 stable 桌面编辑器。GUI 与 headless 使用同一可执行文件。导出需对应版本的模板。|
 
-首次配置会从上游拉取 CMake 固定的 godot-cpp 提交。Cargo 通过 Cargo.lock 固定 crate 版本。支持离线重建的前提是已缓存相同版本的依赖、目标标准库和编译工具。
+首次配置会从上游拉取固定的 godot-cpp 10.0.0-stable，并选择 Godot 4.7 API。Cargo 通过 Cargo.lock 固定 crate 版本。支持离线重建的前提是已缓存相同版本的依赖、目标标准库和编译工具。
 
 ## 编译并安装本机扩展
 
@@ -23,7 +23,7 @@ cmake --build build/native --config Release
 cmake --install build/native --config Release --prefix integrations/godot/runtime
 ```
 
-安装后检查 integrations/godot/runtime/bin 下与宿主匹配的 libofe_godot.dylib、libofe_godot.so 或 ofe_godot.dll。macOS 的两个架构使用同一安装文件名，为它们分别保留构建目录和用于运行或导出的项目副本。
+安装还会准备 Godot 的扩展列表，规避 4.7.2 在首次发现扩展时可能出现的编辑器退出崩溃。清除项目的 .godot 目录后重新执行 install，再运行导入检查。安装后检查 integrations/godot/runtime/bin 下与宿主匹配的 libofe_godot.dylib、libofe_godot.so 或 ofe_godot.dll。macOS 的两个架构使用同一安装文件名，为它们分别保留构建目录和用于运行或导出的项目副本。
 
 ## 首次导入、冒烟与手动验证
 
