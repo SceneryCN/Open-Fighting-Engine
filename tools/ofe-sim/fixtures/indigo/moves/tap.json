@@ -1,0 +1,16 @@
+{
+  "id": "tap",
+  "startup": 1,
+  "active": 2,
+  "recovery": 2,
+  "damage": 12,
+  "hitstun": 2,
+  "blockstun": 1,
+  "hitstop": 0,
+  "pushback": 1,
+  "cancel_windows": [],
+  "invulnerability": 0,
+  "armor": 0,
+  "energy_cost": 0,
+  "lane_rule": "BOTH_LANES"
+}
