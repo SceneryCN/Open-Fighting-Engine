@@ -63,3 +63,7 @@ python scripts/test/headless.py /Applications/Godot.app/Contents/MacOS/Godot
 ```
 
 原始运行摘录与提交对应关系见 [P1 QA 证据](evidence/p1-qa.txt)。本地验证覆盖 macOS ARM64 的标准入口、真实桥接、两个角色的逐帧核心及命令行包。P1 的授权范围为双人 MVP，四人对战、完整 SDK 和图形战斗接入保留在各自阶段。
+
+## 项目负责人签收
+
+2026-11-26，项目负责人确认 P1 通过并授权 P2。最终状态 ACCEPTED。
