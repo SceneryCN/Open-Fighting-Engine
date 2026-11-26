@@ -1,0 +1,59 @@
+name: P0
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install clang-format==23.1.5
+          clang-format --dry-run --Werror integrations/godot/extension/*.cpp integrations/godot/bridge/include/*.h tests/integration/*.c
+          python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt
+          python -m unittest discover -s tests/formats -v
+      - run: |
+          rustup show
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          cargo test --locked --workspace
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest@0.9.152
+      - run: cargo nextest run --locked --workspace
+  proof:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-24.04, id: linux-x64, preset: Linux x64, output: OFE, binary: OFE}
+          - {os: windows-2022, id: windows-x64, preset: Windows x64, output: OFE.exe, binary: OFE.exe}
+          - {os: macos-15, id: macos-arm64, preset: macOS ARM64, output: OFE.app, binary: OFE.app/Contents/MacOS/OFE}
+          - {os: macos-15-intel, id: macos-x64, preset: macOS x64, output: OFE.app, binary: OFE.app/Contents/MacOS/OFE}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and install bridge
+        run: |
+          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/native --config Release --parallel 4
+          ctest --test-dir build/native -C Release --output-on-failure
+          cmake --install build/native --config Release --prefix integrations/godot/runtime
+      - name: Test editor and release export
+        shell: bash
+        run: |
+          exe="$(python scripts/build/ci-godot.py build/downloads)"
+          python scripts/test/headless.py "$exe"
+          mkdir -p build/export
+          "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
+          python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ofe-p0-${{ matrix.id }}
+          path: build/export/
