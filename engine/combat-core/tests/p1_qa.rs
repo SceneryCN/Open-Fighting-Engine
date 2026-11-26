@@ -297,3 +297,55 @@ fn invalid_geometry_lanes_and_durations_are_rejected() {
         assert!(matches!(Duel::new(cfg), Err(DuelError::InvalidConfig)));
     }
 }
+
+#[test]
+fn two_player_walk_and_failed_overflow_roll_back_the_entire_tick() {
+    let mut cfg = config(i32::MAX - 5);
+    cfg.fighters[1].spawn.z = 1000;
+    let mut game = create(cfg);
+    let walk = |axis| Controls { axis, ..neutral() };
+    tick(&mut game, walk(-1), walk(1));
+    assert_eq!(game.fighters()[0].position.x, -5);
+    assert_eq!(game.fighters()[1].position.x, i32::MAX);
+    assert!(
+        game.events().iter().any(
+            |event| matches!(event, Event::Moved { id: 2, position } if position.x == i32::MAX)
+        )
+    );
+    let before = *game.fighters();
+    let previous_events = game.events().to_vec();
+    assert_eq!(game.step(2, [walk(1), walk(1)]), Err(DuelError::Overflow));
+    assert_eq!(game.frame(), 1);
+    assert_eq!(*game.fighters(), before);
+    assert_eq!(game.events(), previous_events);
+    tick(&mut game, walk(1), walk(-1));
+    assert_eq!(game.fighters()[0].position.x, 0);
+    assert_eq!(game.fighters()[1].position.x, i32::MAX - 5);
+}
+
+#[test]
+fn identical_input_repeats_states_and_ordered_events_each_frame() {
+    let cfg = config(8);
+    let mut first = create(cfg);
+    let mut replay = create(cfg);
+    let mut tick_count = 0;
+    for index in 0..240 {
+        let controls = |offset| {
+            let tick = index + offset;
+            Controls {
+                axis: (tick % 3) - 1,
+                jump: tick % 23 == 0,
+                switch_lane: tick % 11 == 0,
+                attack: tick % 5 == 0,
+                guard: tick % 7 == 0,
+            }
+        };
+        for game in [&mut first, &mut replay] {
+            tick(game, controls(1), controls(3));
+        }
+        assert_eq!(first.fighters(), replay.fighters());
+        assert_eq!(first.events(), replay.events());
+        tick_count += 1;
+    }
+    assert_eq!(first.frame(), tick_count);
+}
