@@ -35,7 +35,7 @@ python3 scripts/test/headless.py "$GODOT"
 "$GODOT" --path integrations/godot/runtime
 ```
 
-源码自检覆盖首次导入、P0 桥接重入、外部角色、P4 双人场景和 P5 示范游戏。正常启动进入主菜单，按 Esc 暂停。单独启动旧场景可显式指定 res://proof.tscn 或 res://match.tscn。[游戏操作与训练](../p5/PLAY.md)
+源码自检覆盖首次导入、P0 桥接重入、外部角色、P4 双人场景、P5 示范游戏及 P6 跨进程存盘回放。正常启动进入主菜单，按 Esc 暂停。单独启动旧场景可显式指定 res://proof.tscn 或 res://match.tscn。[游戏操作与训练](../p5/PLAY.md)
 
 ## 测试与基准
 
