@@ -10,4 +10,12 @@
 
 ## 验收
 
-独立 QA 结果和平台运行记录将在验证结束后汇总。当前状态为 TESTING，待项目负责人签收。[P6 交付归档](docs/p6/DELIVERY_REPORT.md)
+独立 QA 将作者包与游戏包分别解到仓库外。两名第三方角色通过选人进入 Rust 对局，自定义攻击造成 23 点伤害，受击方的生命与血条均从 113 降至 90。六种错误输入均在启动游戏前被拒绝。85 项 Rust 测试、两项单独运行的性能与内存测试、3 项 CTest、24 项 Python 测试通过，编辑器与导出程序均通过历史场景回归。[独立 QA 报告](docs/testing/P7_ACCEPTANCE_REPORT.md)
+
+在 M1 Max 的真实导出窗口预热 120 帧后采样 600 个绘制间隔，同期推进 600 个模拟帧。平均 59.983 FPS，绘制间隔 P99 为 20.986 ms，最长 23.728 ms。其他平台的 GPU 帧时间尚待实机测量。[机器记录](docs/testing/evidence/p7-author.json)
+
+当前状态为 TESTING，待项目负责人签收。[P6 交付归档](docs/p6/DELIVERY_REPORT.md)
+
+## 四平台运行记录
+
+提交 `6d0e2d2` 的质量检查及 Windows x64、Linux x64、macOS ARM64、macOS x64 四个构建任务全部成功。四端均通过编辑器与导出游戏的外部作者测试，产生一个通用作者包、四个游戏包和四个模拟器包。[四平台运行记录与下载](https://github.com/SceneryCN/Open-Fighting-Engine/actions/runs/45823912113)
