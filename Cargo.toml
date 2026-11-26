@@ -4,6 +4,7 @@ members = [
     "engine/character-runtime",
     "engine/combat-core",
     "engine/resource-runtime",
+    "engine/replay-runtime",
     "integrations/godot/bridge",
     "tests/p3",
     "tools/ofe-sim",

@@ -65,6 +65,8 @@ def package(output):
                   f"Run ./{executable} --script duel.frames to replay the example, or ./{executable} for interactive controls.\n"
                   f"Run ./{executable} --mode 2v2 --script arena.frames or use --mode ffa for four independent teams.\n"
                   f"Run ./{executable} --character characters/amber --script duel.frames to use the external character.\n"
+                  f"Record: ./{executable} record --mode 2v2 --seed 42 --script arena.frames --out team.ofr\n"
+                  f"Verify a game or simulator recording: ./{executable} replay team.ofr\n"
                   "Install the authoring CLI dependencies using Python 3.12: python -m pip install --require-hashes -r tools/ofe-validator/requirements.txt\n"
                   "Build a character: python tools/ofe-validator/ofe.py package characters/amber amber.ofc\n"
                   f"Play the packed character: python tools/ofe-validator/ofe.py run amber.ofc --simulator ./{executable} --script duel.frames\n"

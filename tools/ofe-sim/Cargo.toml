@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+ofe-replay-runtime = { path = "../../engine/replay-runtime" }
 ofe-character-runtime = { path = "../../engine/character-runtime" }
 ofe-resource-runtime = { path = "../../engine/resource-runtime" }
 ofe-combat-core = { path = "../../engine/combat-core" }

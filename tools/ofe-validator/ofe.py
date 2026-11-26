@@ -231,8 +231,13 @@ def main():
         if command == "run":
             cmd.add_argument("--simulator", type=Path, required=True)
             cmd.add_argument("--script", type=Path)
+    replay = sub.add_parser("replay", help="verify an OFE_REPLAY simulation or game recording")
+    replay.add_argument("source", type=Path)
+    replay.add_argument("--simulator", type=Path, required=True)
     args = parser.parse_args()
     try:
+        if args.command == "replay":
+            return subprocess.run([args.simulator.resolve(), "replay", args.source]).returncode
         if args.command == "validate" and args.source.is_file() and args.source.suffix.lower() != ".ofc":
             validate(args.source)
         else:

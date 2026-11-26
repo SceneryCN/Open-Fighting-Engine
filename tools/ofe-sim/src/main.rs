@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Local duel and four-player frame consoles.
 mod arena_console;
+mod replay_cli;
 use ofe_combat_core::duel::{Controls, Duel};
 use std::{
     env,
@@ -86,11 +87,15 @@ fn entry() -> Result<(), String> {
         }
         [help] if help == "--help" || help == "-h" => {
             println!(
-                "{USAGE}\n{}\nofe-sim --character DIR [--script FILE]; @N selects a manifest move by index.",
-                arena_console::USAGE
+                "{USAGE}\n{}\nofe-sim --character DIR [--script FILE]; @N selects a manifest move by index.\n{}",
+                arena_console::USAGE,
+                replay_cli::USAGE
             );
             Ok(())
         }
+        [sub, rest @ ..] if sub == "record" => replay_cli::record(rest),
+        [sub, file] if sub == "replay" => replay_cli::verify(file.as_ref()),
+        [sub, ..] if sub == "replay" => Err(replay_cli::USAGE.into()),
         [flag, path] if flag == "--script" => {
             let file = open_script(path)?;
             run(BufReader::new(file))

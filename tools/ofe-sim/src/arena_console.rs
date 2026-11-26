@@ -80,6 +80,17 @@ pub(crate) fn run(input: impl BufRead, mode: ArenaMode) -> Result<(), String> {
 pub(crate) fn run_config(input: impl BufRead, config: ArenaConfig) -> Result<(), String> {
     let mut arena = Arena::new(config).map_err(|e| format!("initialization: {e:?}"))?;
     print_arena(&arena);
+    advance(input, &mut arena, |after, _| {
+        print_arena(after);
+        Ok(())
+    })
+}
+
+pub(crate) fn advance(
+    input: impl BufRead,
+    arena: &mut Arena,
+    mut committed: impl FnMut(&Arena, &[Command]) -> Result<(), String>,
+) -> Result<(), String> {
     for (i, line) in input.lines().enumerate() {
         let n = i + 1;
         let line = line.map_err(|e| format!("line {n}: {e}"))?;
@@ -112,7 +123,7 @@ pub(crate) fn run_config(input: impl BufRead, config: ArenaConfig) -> Result<(),
         arena
             .step(frame, &commands)
             .map_err(|e| format!("frame {frame}: {e:?}"))?;
-        print_arena(&arena);
+        committed(arena, &commands)?;
     }
     Ok(())
 }

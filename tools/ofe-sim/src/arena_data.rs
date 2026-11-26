@@ -123,6 +123,17 @@ pub fn sample_arena_config(mode: ArenaMode) -> Result<ArenaConfig, String> {
     })
 }
 
+/// Bind the two embedded duel characters using the normal runtime scene loader.
+pub fn sample_duel_arena_config() -> Result<ArenaConfig, String> {
+    let first = CombatData::load_from(|p| embedded(AMBER, p), None)?;
+    let second = CombatData::load_from(|p| embedded(INDIGO, p), None)?;
+    ofe_character_runtime::duel_scene::bind(
+        [&first, &second],
+        include_str!("../fixtures/scene.json"),
+        include_str!("../fixtures/arena_scene.json"),
+    )
+}
+
 /// Build a mirror match from external OFC data and the bundled duel's motion settings.
 pub fn external_arena_config(root: &Path) -> Result<ArenaConfig, String> {
     let character = Character::load(root)?;

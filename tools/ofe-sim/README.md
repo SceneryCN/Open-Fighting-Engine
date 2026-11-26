@@ -69,3 +69,16 @@ cargo test --locked -p ofe-sim
 在仓库根执行 `cargo run --locked -p ofe-sim -- --character tools/ofe-sim/fixtures/arena`，可用该目录中的角色创建镜像对战。每行两列输入分别控制双方，A 使用 manifest.moves 中的首个动作，@N 选择从零开始的招式索引（例如 `@3 -` 施放夹具的投射物）。输入脚本可通过 `--script FILE` 提供。位置与移动参数来自默认对战场景，初始能量受角色的 max_energy 限制。
 
 角色目录在启动时读取。可修改属性或招式后重跑同一可执行文件。现有 Arena 配置接收一个共享攻击框与一个受击框，外部对战入口在几何不明确时报告错误。角色层仍可读取包含其他框组、多个几何框或仅用于展示的角色包。带取消窗口的动作需要根目录中的 move_profile.json 提供目标。
+
+## P6 确定性录像
+
+`record` 从脚本输入创建自包含的 OFE_REPLAY v1 文件。`duel` 使用内置 Amber/Indigo，`2v2` 和 `ffa` 使用四席样例。种子可以是 0 至 18446744073709551615 的整数。脚本验证或写入失败时保留已有输出。
+
+```sh
+cargo build --release --locked -p ofe-sim
+target/release/ofe-sim record --mode 2v2 --seed 42 --script tools/ofe-sim/fixtures/arena.frames --out team.ofr
+target/release/ofe-sim replay team.ofr
+python tools/ofe-validator/ofe.py replay team.ofr --simulator target/release/ofe-sim
+```
+
+`replay` 恢复文件中的初始战斗快照，逐帧执行录制的输入并校验状态哈希。可直接读取游戏导出的同格式训练录像。成功时输出验证帧数、最终帧和 16 位十六进制哈希，退出码为 0。遇到状态差异时在首个不一致帧报告预期与实际哈希；非法输入会报告帧号，失败退出码为 1。文件受 64 MiB 和 216,000 帧上限约束。初始快照包含模拟所需的角色规则，验证过程不需要角色目录、Godot 或音画资源。[格式与恢复约定](../../docs/architecture/ADR-009.md)

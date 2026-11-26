@@ -219,6 +219,7 @@ dependencies = [
  "ofe-animation-runtime",
  "ofe-character-runtime",
  "ofe-combat-core",
+ "ofe-replay-runtime",
  "serde_json",
 ]
 
@@ -238,6 +239,8 @@ name = "ofe-combat-core"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -247,6 +250,15 @@ dependencies = [
  "ofe-animation-runtime",
  "ofe-character-runtime",
  "ofe-resource-runtime",
+ "serde_json",
+]
+
+[[package]]
+name = "ofe-replay-runtime"
+version = "0.1.0"
+dependencies = [
+ "ofe-combat-core",
+ "serde",
  "serde_json",
 ]
 
@@ -265,6 +277,7 @@ dependencies = [
  "criterion",
  "ofe-character-runtime",
  "ofe-combat-core",
+ "ofe-replay-runtime",
  "ofe-resource-runtime",
  "serde",
  "serde_json",

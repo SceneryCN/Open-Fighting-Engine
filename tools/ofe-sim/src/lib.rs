@@ -94,7 +94,9 @@ pub fn sample_config() -> Result<DuelConfig, String> {
 }
 
 mod arena_data;
-pub use arena_data::{ArenaMode, external_arena_config, sample_arena_config};
+pub use arena_data::{
+    ArenaMode, external_arena_config, sample_arena_config, sample_duel_arena_config,
+};
 
 #[cfg(test)]
 mod tests {
