@@ -5,7 +5,7 @@ extends RefCounted
 # match directory. User-supplied directories are opened in place and never removed.
 var directory := ""
 
-func open_dirs(roster := PackedStringArray(["amber", "indigo"])) -> PackedStringArray:
+func open_dirs(roster := PackedStringArray(["amber", "indigo"]), character_dirs: Dictionary = {}) -> PackedStringArray:
 	var result := PackedStringArray()
 	var options := OS.get_cmdline_user_args()
 	for slot in range(1, roster.size() + 1):
@@ -19,12 +19,15 @@ func open_dirs(roster := PackedStringArray(["amber", "indigo"])) -> PackedString
 		if not override.is_empty():
 			result.append(ProjectSettings.globalize_path(override))
 			continue
+		var actor := roster[slot - 1]
+		if character_dirs.has(actor):
+			result.append(character_dirs[actor])
+			continue
 		if directory.is_empty():
 			directory = OS.get_temp_dir().path_join("ofe-%d-%d-%d" % [OS.get_process_id(), Time.get_ticks_usec(), get_instance_id()])
 			if DirAccess.make_dir_absolute(directory) != OK:
 				directory = ""
 				return PackedStringArray()
-		var actor := roster[slot - 1]
 		if actor not in ["amber", "indigo"]:
 			return PackedStringArray()
 		var folder := directory.path_join(actor)

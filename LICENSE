@@ -5,7 +5,7 @@ documentation: Mozilla Public License 2.0 (LICENSES/MPL-2.0.txt).
 Native data format specifications, schemas, original synthetic data fixtures, bundled
 example fighter assets and demo/viaduct.wav music:
 CC0 1.0 Universal (LICENSES/CC0-1.0.txt).
-Original SDK and example character code, if introduced under the charter:
+Original Rust author SDKs and example character code in sdk/ and samples/sdk-author/:
 MIT (LICENSES/MIT.txt).
 
 These terms cover original OFE contributions. Third-party components keep

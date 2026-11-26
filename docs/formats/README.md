@@ -39,3 +39,7 @@ OFC 1.0 描述基础帧数、伤害、硬直、击停、护甲、无敌、取消
 ## P6 权威录像
 
 OFE_REPLAY v1 保存起始规则及快照、每个提交帧的命令与预期哈希。Schema 描述磁盘形状和基本范围；核心恢复时核对所有槽位、数组对应关系、招式索引与有效窗口。运行 `ofe-sim replay FILE` 会逐帧复算并定位首次差异。[Schema](../../formats/replay/schema.json) · [快照和哈希契约](../architecture/ADR-009.md)
+
+## P7 项目发布包
+
+`.ogp` 为根目录包含 project.json 的 ZIP；其中的角色目录各自包含 manifest.json 和可选的 move_profile.json。`.ofc` 的根入口为 manifest.json。OGP 校验、检查、打包与 OFC 使用同一套命令。launch 解析项目并追加本地角色，可用模式、标题、选人顺序和纵深投影取自项目；舞台与 UI 使用内置实现。作者工具可以在仓库外运行。[作者入门](../p7/AUTHORING.md)

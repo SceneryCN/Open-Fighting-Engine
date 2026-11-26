@@ -28,6 +28,19 @@ jobs:
         with:
           tool: cargo-nextest@0.9.152
       - run: cargo nextest run --locked --workspace
+      - name: Package and exercise the portable author kit
+        run: |
+          python scripts/release/package_sdk.py build/ofe-author-kit.tar.gz
+          mkdir build/author-kit
+          tar -xzf build/ofe-author-kit.tar.gz -C build/author-kit
+          cd build/author-kit
+          cargo run --locked --manifest-path samples/sdk-author/Cargo.toml -- "$RUNNER_TEMP/rook"
+          python tools/ofe-validator/ofe.py package "$RUNNER_TEMP/rook" "$RUNNER_TEMP/rook.ofc"
+          python tools/ofe-validator/ofe.py package samples/projects/starter "$RUNNER_TEMP/starter.ogp"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ofe-author-kit
+          path: build/ofe-author-kit.tar.gz
   proof:
     strategy:
       fail-fast: false
@@ -78,10 +91,12 @@ jobs:
           sim="$PWD/target/release/ofe-sim"
           if [[ "$RUNNER_OS" == Windows ]]; then sim="$sim.exe"; fi
           python scripts/test/headless.py "$exe" --simulator "$sim"
+          python scripts/test/p7_author.py "$exe"
           if [[ "$RUNNER_OS" == macOS ]]; then python scripts/release/prepare_macos.py; fi
           mkdir -p build/export
           "$exe" --headless --path integrations/godot/runtime --export-release "${{ matrix.preset }}" "$PWD/build/export/${{ matrix.output }}"
           python scripts/test/headless.py "$PWD/build/export/${{ matrix.binary }}" --exported --simulator "$sim"
+          python scripts/test/p7_author.py "$PWD/build/export/${{ matrix.binary }}" --exported
           python scripts/release/package_runtime.py build/export build/ofe-runtime.tar.gz
       - uses: actions/upload-artifact@v7
         with:

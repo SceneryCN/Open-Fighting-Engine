@@ -13,6 +13,10 @@ cargo run --locked -p ofe-sim -- --mode ffa --script tools/ofe-sim/fixtures/aren
 
 下载对应平台的 `ofe-runtime` 归档，解包后启动 OFE。从源码构建原生扩展后，也可以用 Godot 4.7.2 打开项目并按 F5。主菜单提供本地 1V1、2V2、四人混战、训练和设置。Esc 暂停，Controls 查看按键。[操作与训练指南](docs/p5/PLAY.md)
 
+## 制作角色与运行自己的项目
+
+从四平台构建页面下载 `ofe-author-kit` 和本机的 `ofe-runtime`。作者包提供角色与动画 Rust SDK、可编辑的 Rook 角色和 Amber Dojo 示例项目。通过命令行打包后，追加角色会出现在游戏的选人菜单。[作者入门与启动命令](docs/p7/AUTHORING.md)
+
 ## 录制与验证回放
 
 训练场用 F8 开始或停止录制，F10 保存，F11 从磁盘读取。游戏和命令行共用同一录像格式。模拟器可独立验证游戏录下的每一帧，在首次分歧时报告帧号与两个状态哈希。[录像操作与复现命令](docs/p6/REPLAY.md)
@@ -46,6 +50,6 @@ target/release/ofe-sim --character tools/ofe-sim/fixtures/amber --script tools/o
 |tools/ofe-sim|读取外部角色目录、内置 OFC 与招式补充配置，支持双人和四人逐帧模拟|
 |tests、scripts|格式样例、跨语言回归与可重复构建验证|
 
-[项目总任务书 V1.0](docs/governance/PROJECT_CHARTER_V1.0.md) 是项目唯一总纲。P0 至 P2 的复核结论见[稳定性报告](docs/testing/P0_P2_REVIEW.md)。[P6 确定性决策](docs/architecture/ADR-009.md)、[项目状态](PROJECT_STATUS.md)和[交付报告](DELIVERY_REPORT.md)记录本阶段的范围与验证结果。
+[项目总任务书 V1.0](docs/governance/PROJECT_CHARTER_V1.0.md) 是项目唯一总纲。P0 至 P2 的复核结论见[稳定性报告](docs/testing/P0_P2_REVIEW.md)。[P7 SDK 与项目启动决策](docs/architecture/ADR-010.md)、[项目状态](PROJECT_STATUS.md)和[交付报告](DELIVERY_REPORT.md)记录本阶段的范围与验证结果。
 
 源代码和数据按模块许可。分发前查看[许可证分配](LICENSE)、[依赖清单](DEPENDENCIES.md)及[许可初审](LICENSE_AUDIT.md)。

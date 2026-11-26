@@ -6,7 +6,13 @@ const PAPER := Color("#fff0cf")
 const COPPER := Color("#ffad70")
 const MIST := Color("#a4d5db")
 const MODES := {"duel":"Local duel", "team":"Team battle", "ffa":"Free-for-all", "training":"Training"}
-const FIGHTERS := ["amber", "indigo"]
+const PROJECT_MODES := {"1v1":"duel", "2v2":"team", "ffa":"ffa", "training":"training"}
+var choices := PackedStringArray(["amber", "indigo"])
+var character_names := {"amber":"Amber", "indigo":"Indigo"}
+var character_dirs: Dictionary = {}
+var project_title := "Sunset Viaduct"
+var available_modes := PackedStringArray(["duel", "team", "ffa", "training"])
+var depth_projection := 0.054
 
 var screen := ""
 var mode := "duel"
@@ -28,6 +34,11 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred(legacy)
 		return
 	for arg in args:
+		if arg.begins_with("--ofe-project="):
+			if not character_dirs.is_empty() or not _load_project(arg.trim_prefix("--ofe-project=")):
+				push_error("Could not open the OFE project or its characters.")
+				get_tree().quit(2)
+				return
 		for i in range(4):
 			var prefix := "--p%d-dir=" % (i + 1)
 			if arg.begins_with(prefix):
@@ -35,7 +46,9 @@ func _ready() -> void:
 	get_tree().auto_accept_quit = false
 	sound = DemoSound.new()
 	add_child(sound)
-	for id in FIGHTERS:
+	for id in choices:
+		if character_dirs.has(id):
+			continue
 		var pack := ZIPReader.new()
 		if pack.open("res://match/%s.ofc" % id) != OK:
 			continue
@@ -54,6 +67,65 @@ func _ready() -> void:
 	elif "--p6-test" in args:
 		test_driver = load("res://demo/smoke_p6.gd").new()
 		test_driver.run.call_deferred(self)
+
+	elif "--p7-test" in args:
+		test_driver = load("res://demo/smoke_p7.gd").new()
+		test_driver.run.call_deferred(self)
+
+func _load_project(path: String) -> bool:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return false
+	var data = JSON.parse_string(file.get_as_text())
+	if not data is Dictionary or data.get("format") != "OFE_LAUNCH" or data.get("version") != 1:
+		return false
+	if not data.get("title") is String or not data.get("characters") is Array or data.characters.is_empty():
+		return false
+	if not data.get("modes") is Array or data.modes.is_empty():
+		return false
+	if typeof(data.get("depth_projection")) not in [TYPE_FLOAT, TYPE_INT] or data.depth_projection < 0:
+		return false
+	available_modes.clear()
+	for entry in data.modes:
+		if not entry is String or not PROJECT_MODES.has(entry) or PROJECT_MODES[entry] in available_modes:
+			return false
+		available_modes.append(PROJECT_MODES[entry])
+	project_title = data.title
+	depth_projection = data.depth_projection
+	choices.clear()
+	character_names.clear()
+	for entry in data.characters:
+		if not entry is Dictionary or not entry.get("id") is String or not entry.get("name") is String or not entry.get("dir") is String:
+			return false
+		if entry.id.is_empty() or character_dirs.has(entry.id) or not entry.dir.is_absolute_path():
+			return false
+		var portrait := _character_portrait(entry.dir)
+		if portrait == null:
+			return false
+		choices.append(entry.id)
+		character_names[entry.id] = entry.name
+		character_dirs[entry.id] = entry.dir
+		portraits[entry.id] = portrait
+	return true
+
+# Use the native idle frame so sequence images and sheet regions match the arena.
+func _character_portrait(directory: String) -> AtlasTexture:
+	if not ClassDB.class_exists(&"OFEMatch"):
+		return null
+	var preview = ClassDB.instantiate(&"OFEMatch")
+	if preview.open_roster(PackedStringArray([directory, directory]), "duel") != 0:
+		return null
+	var snapshot: Dictionary = preview.snapshot()
+	var portrait: AtlasTexture
+	if snapshot.get("status", -1) == 0 and not snapshot.fighters.is_empty():
+		var frame: Dictionary = snapshot.fighters[0].animation
+		var sheet := Image.new()
+		if sheet.load_png_from_buffer(preview.image(frame.image_id)) == OK:
+			portrait = AtlasTexture.new()
+			portrait.atlas = ImageTexture.create_from_image(sheet)
+			portrait.region = Rect2(frame.rect[0], frame.rect[1], frame.rect[2], frame.rect[3])
+	preview.close()
+	return portrait
 
 func _page(id: String) -> void:
 	if page != null:
@@ -134,21 +206,24 @@ func _main_menu() -> void:
 	_page("menu")
 	_rect(0,0,435,540, INK)
 	_label("OPEN FIGHTING ENGINE", 42,38,19,MIST)
-	_label("Sunset Viaduct", 40,71,46)
+	var heading := _label(project_title, 40,71,46)
+	heading.size.x = 375
+	heading.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	heading.tooltip_text = project_title
 	var y := 168
-	for id in MODES:
-		_button(MODES[id],44,y,335,_choose_mode.bind(id),id == "duel")
+	for id in available_modes:
+		_button(MODES[id],44,y,335,_choose_mode.bind(id),id == available_modes[0])
 		y += 52
 	_button("Settings",44,y,335,_settings)
 	_button("Controls",44,y+52,335,_controls.bind(false))
-	_portrait("amber",414,132,316)
-	_portrait("indigo",670,146,295,true)
+	_portrait(choices[0],414,132,316)
+	_portrait(choices[1 % choices.size()],670,146,295,true)
 
 func _choose_mode(id: String) -> void:
 	mode = id
-	roster = PackedStringArray(["amber","indigo"])
-	if id in ["team","ffa"]:
-		roster.append_array(PackedStringArray(["amber","indigo"]))
+	roster.clear()
+	for i in range(4 if id in ["team","ffa"] else 2):
+		roster.append(choices[i % choices.size()])
 	_selection()
 
 func _slot_name(i: int) -> String:
@@ -176,13 +251,14 @@ func _selection(slot := 0) -> void:
 			continue
 		_portrait(roster[i],x+(width-152)/2,170,152, i % 2 == 1)
 		var picker := OptionButton.new()
-		_label("Rising strike" if roster[i] == "amber" else "Projectile specialist",x+10,323,14,accent)
+		if character_dirs.is_empty():
+			_label("Rising strike" if roster[i] == "amber" else "Projectile specialist",x+10,323,14,accent)
 		picker.position = Vector2(x+10,353)
 		picker.custom_minimum_size = Vector2(width-30,42)
-		for fighter in FIGHTERS:
-			picker.add_item(str(fighter).capitalize())
-		picker.selected = FIGHTERS.find(roster[i])
-		picker.item_selected.connect(func(index): roster[i] = FIGHTERS[index]; _selection(i))
+		for fighter in choices:
+			picker.add_item(character_names[fighter])
+		picker.selected = choices.find(roster[i])
+		picker.item_selected.connect(func(index): roster[i] = choices[index]; _selection(i))
 		page.add_child(picker)
 		if i == slot:
 			picker.grab_focus()
@@ -206,7 +282,7 @@ func _versus() -> void:
 			_portrait(roster[i],x+(width-side)/2,135,side,i>=roster.size()/2)
 		_rect(x,363,width-4,67,INK)
 		_label(_slot_name(i),x+12,367,13,MIST)
-		_label(str(external_dirs.get(i,roster[i].capitalize())).left(18),x+12,383,25)
+		_label(str(external_dirs.get(i,character_names[roster[i]])).left(18),x+12,383,25)
 	_footer(_selection,"Fight",_fight)
 	page.get_child(-1).grab_focus()
 
@@ -219,6 +295,8 @@ func _fight() -> void:
 	arena = load("res://demo/arena.tscn").instantiate()
 	arena.mode = mode
 	arena.roster = roster.duplicate()
+	arena.character_dirs = character_dirs
+	arena.depth_projection = depth_projection
 	arena.pause_requested.connect(_pause)
 	arena.finished.connect(_result)
 	add_child(arena)

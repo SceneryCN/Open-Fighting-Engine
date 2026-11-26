@@ -6,6 +6,7 @@ signal pause_requested()
 
 var mode := "duel"
 var roster := PackedStringArray(["amber", "indigo"])
+var character_dirs: Dictionary = {}
 var suspended := false
 var boxes_visible := false
 var infinite_health := true
@@ -42,7 +43,7 @@ const TAPE_LIMIT := 36000 # Ten minutes at simulation speed.
 func _ready() -> void:
 	if sprites.is_empty():
 		_setup_arena()
-	_dirs = _bundles.open_dirs(roster)
+	_dirs = _bundles.open_dirs(roster, character_dirs)
 	_pad_ids = Input.get_connected_joypads()
 	if not Input.joy_connection_changed.is_connected(_controllers_changed):
 		Input.joy_connection_changed.connect(_controllers_changed)
