@@ -78,6 +78,10 @@ pub unsafe extern "C" fn ofe_v1_create(out: *mut u64) -> i32 {
 pub extern "C" fn ofe_v1_destroy(handle: u64) -> i32 {
     with_registry(|registry| {
         registry.battles.remove(&handle).ok_or(INVALID_HANDLE)?;
+        // Rust does not drop statics on library unload. Free the table when idle.
+        if registry.battles.is_empty() {
+            registry.battles.shrink_to_fit();
+        }
         Ok(())
     })
 }
