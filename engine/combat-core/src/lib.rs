@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Deterministic fixed-tick simulations: the original bridge proof and two-fighter duels.
+pub mod arena;
 pub mod duel;
 use std::fmt;
 
